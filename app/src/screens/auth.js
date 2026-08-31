@@ -25,11 +25,7 @@
     id: 'signup', code: '1q', label: 'Sign up', dark: true,
     render: function () {
       var grades = GRADES.map(function (g) {
-        var on = g === '12th';
-        return '<div style="flex:1;height:44px;border-radius:10px;background:' +
-          (on ? 'rgba(255,181,36,.18)' : 'var(--c-07)') + ';border:1px solid ' +
-          (on ? 'var(--gold)' : 'var(--c-18)') +
-          ';display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)">' + g + '</div>';
+        return S.forms.pick('signup.grade', g, g, 'pick--grade');
       }).join('');
 
       return '<div class="screen screen--navy">' +
@@ -45,21 +41,23 @@
           '<div style="display:flex;flex-direction:column;gap:11px;margin-top:24px">' +
             '<div>' +
               '<div class="field-label">PHONE NUMBER</div>' +
-              '<div class="field field--focus field--split">' +
-                '<div>(415) 555-0182</div>' +
-                '<div style="font:400 10px/1 var(--mono);color:var(--c-50)">US +1</div>' +
+              '<div class="field field--split">' +
+                S.forms.input({ bind: 'signup.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
+                '<div style="font:400 10px/1 var(--mono);color:var(--c-50);flex:none">US +1</div>' +
               '</div>' +
             '</div>' +
             '<div style="display:flex;gap:10px">' +
-              '<div style="flex:1"><div class="field-label">FIRST NAME</div><div class="field">Maya</div></div>' +
-              '<div style="flex:1"><div class="field-label">LAST NAME</div><div class="field">Okonkwo</div></div>' +
+              '<div style="flex:1"><div class="field-label">FIRST NAME</div><div class="field">' +
+                S.forms.input({ bind: 'signup.first', placeholder: 'First' }) + '</div></div>' +
+              '<div style="flex:1"><div class="field-label">LAST NAME</div><div class="field">' +
+                S.forms.input({ bind: 'signup.last', placeholder: 'Last' }) + '</div></div>' +
             '</div>' +
             '<div style="font:400 11px/1.45 var(--sans);color:var(--c-50);margin-top:-2px">Real names only — no nicknames or handles. Everyone in the game sees this.</div>' +
             '<div>' +
               '<div class="field-label">SET A PASSWORD</div>' +
               '<div class="field field--split">' +
-                '<div style="font:400 17px/1 var(--sans);letter-spacing:.22em;color:var(--c-75)">••••••••</div>' +
-                '<div style="font:500 11px/1 var(--mono);color:var(--c-55)">SHOW</div>' +
+                S.forms.input({ bind: 'signup.password', type: 'password', placeholder: 'At least 8 characters' }) +
+                '<div class="reveal" data-reveal="signup.showPw">SHOW</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -70,12 +68,12 @@
           '</div>' +
 
           '<div style="display:flex;gap:10px;padding:13px 14px;border-radius:11px;background:var(--c-06);margin-top:14px">' +
-            '<div style="width:15px;height:15px;border-radius:4px;border:1px solid var(--c-50);flex:none;margin-top:1px"></div>' +
+            S.forms.checkbox('signup.agree') +
             '<div style="font:400 11.5px/1.5 var(--sans);color:var(--c-70)">I\'m in 8th grade through senior year and I agree to play by the game\'s safety rules. Soaked is not affiliated with any school.</div>' +
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-go="verify">TEXT ME A CODE</button>' +
+          '<button class="cta" data-cta="signup" data-go="verify">TEXT ME A CODE</button>' +
           '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>' +
         '</div>' +
       '</div>';
@@ -87,12 +85,9 @@
   S.screens.verify = {
     id: 'verify', code: '1r', label: 'Verify phone', dark: true,
     render: function () {
-      var digits = ['4', '1', '7', '9', '', ''];
-      var boxes = digits.map(function (d, i) {
-        var border = d ? (i === 3 ? 'var(--gold)' : 'rgba(252,247,234,.2)') : 'rgba(252,247,234,.14)';
-        return '<div style="flex:1;height:62px;border-radius:11px;background:var(--c-07);border:1px solid ' + border +
-          ';display:flex;align-items:center;justify-content:center;font:700 26px/1 var(--serif)">' + d + '</div>';
-      }).join('');
+      var boxes = S.forms.codeRow({
+        bind: 'verify.code', len: 6, kind: 'digit', theme: 'navy', label: 'One-time code'
+      });
 
       return '<div class="screen screen--navy">' +
         '<div class="jersey"></div>' +
@@ -100,14 +95,14 @@
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="signup">&lsaquo; Back</div>' +
           '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your texts</div>' +
           '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to (415) 555-0182 to confirm your number. You won’t need a code again — just your password.</div>' +
-          '<div style="display:flex;gap:8px;margin-top:30px">' + boxes + '</div>' +
+          '<div style="margin-top:30px">' + boxes + '</div>' +
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px">' +
             '<div style="font:400 11px/1 var(--mono);color:var(--c-45)">RESEND IN 0:24</div>' +
             '<div style="font:500 12.5px/1 var(--sans);color:var(--gold-light)">Wrong number?</div>' +
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta cta--muted" data-go="join">CONTINUE</button>' +
+          '<button class="cta" data-cta="verify" data-go="join">CONTINUE</button>' +
         '</div>' +
       '</div>';
     }
@@ -128,18 +123,20 @@
           '<div style="font:700 38px/1.08 var(--serif);margin-top:44px">' + S.esc(g[0]) + '<br/>' + S.esc(g[1]) + '</div>' +
 
           '<div style="display:flex;flex-direction:column;gap:10px;margin-top:28px">' +
-            '<div><div class="field-label">PHONE NUMBER</div><div class="field">(415) 555-0182</div></div>' +
+            '<div><div class="field-label">PHONE NUMBER</div><div class="field">' +
+              S.forms.input({ bind: 'signin.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
+            '</div></div>' +
             '<div>' +
               '<div class="field-label">PASSWORD</div>' +
-              '<div class="field field--focus field--split">' +
-                '<div style="font:400 17px/1 var(--sans);letter-spacing:.22em;color:var(--c-75)">••••••••</div>' +
-                '<div style="font:500 11px/1 var(--mono);color:var(--c-55)">SHOW</div>' +
+              '<div class="field field--split">' +
+                S.forms.input({ bind: 'signin.password', type: 'password', placeholder: 'Your password' }) +
+                '<div class="reveal" data-reveal="signin.showPw">SHOW</div>' +
               '</div>' +
             '</div>' +
             '<div style="text-align:right;font:500 12px/1 var(--sans);color:var(--gold-light);margin-top:2px">Forgot password?</div>' +
           '</div>' +
 
-          '<button class="cta" style="margin-top:20px" data-go="home">SIGN IN</button>' +
+          '<button class="cta" style="margin-top:20px" data-cta="signin" data-go="home">SIGN IN</button>' +
 
           '<div style="display:flex;align-items:center;gap:11px;margin:24px 0 16px">' +
             '<div style="flex:1;height:1px;background:rgba(252,247,234,.16)"></div>' +
@@ -170,20 +167,16 @@
   S.screens.join = {
     id: 'join', code: '1k', label: 'Join game',
     render: function () {
-      var code = ['N', 'V', 'H', '2', '', ''];
-      var boxes = code.map(function (ch, i) {
-        var border = i === 3 ? '2px solid var(--gold)' :
-          (ch ? '1px solid var(--n-18)' : '1px solid var(--n-14)');
-        return '<div style="flex:1;height:60px;border-radius:10px;background:#fff;border:' + border +
-          ';display:flex;align-items:center;justify-content:center;font:700 26px/1 var(--serif)">' + ch + '</div>';
-      }).join('');
+      var boxes = S.forms.codeRow({
+        bind: 'join.code', len: 6, kind: 'alnum', theme: 'light', label: 'Game code'
+      });
 
       return '<div class="screen">' +
         '<div style="flex:1;overflow:hidden;padding:78px 24px 0;display:flex;flex-direction:column">' +
           '<div style="font:700 22px/1 var(--serif);letter-spacing:.02em">SOAKED</div>' +
           '<div style="font:700 38px/1.08 var(--serif);margin-top:34px">Got a game<br/>code?</div>' +
           '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60);margin-top:12px">Whoever runs your game hands these out. Six characters, not case sensitive.</div>' +
-          '<div style="display:flex;gap:8px;margin-top:26px">' + boxes + '</div>' +
+          '<div style="margin-top:26px">' + boxes + '</div>' +
 
           '<div style="display:flex;align-items:center;gap:12px;margin-top:24px;padding:14px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
             '<div class="hatch-qr" style="width:46px;height:46px;border-radius:8px"></div>' +
@@ -211,7 +204,7 @@
             '<div style="font:700 19px/1 var(--serif);color:var(--gold-ink)">$25</div>' +
             '<div style="font:400 11.5px/1.4 var(--sans);color:var(--gold-ink-soft)">Entry fee, due before your first phase starts. Next step.</div>' +
           '</div>' +
-          '<button class="cta cta--muted-ink" data-go="payment">CONTINUE TO PAYMENT</button>' +
+          '<button class="cta" data-cta="join" data-muted="ink" data-go="payment">CONTINUE TO PAYMENT</button>' +
           '<div style="text-align:center;font:400 11.5px/1.4 var(--sans);color:var(--n-45);margin-top:14px">The organizer may need to approve you</div>' +
         '</div>' +
         S.tabBar('home') +
@@ -225,13 +218,12 @@
     id: 'payment', code: '1l', label: 'Payment',
     render: function () {
       function method(o) {
-        return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:' +
-            (o.on ? '2px solid var(--gold)' : '1px solid var(--n-12)') + '">' +
-          '<div class="hatch-card" style="width:36px;height:25px;border-radius:5px"></div>' +
+        return S.forms.pick('payment.method', o.key,
+          '<div class="hatch-card" style="width:36px;height:25px;border-radius:5px;flex:none"></div>' +
           '<div style="flex:1"><div style="font:600 13px/1.2 var(--sans)">' + o.name + '</div>' +
             '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:4px">' + o.note + '</div></div>' +
-          (o.on ? '<div style="width:20px;height:20px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font:700 11px/1 var(--sans);color:var(--navy)">✓</div>' : '') +
-        '</div>';
+          '<div class="pick__tick">✓</div>',
+          'pick--pay');
       }
 
       return '<div class="screen">' +
@@ -272,9 +264,9 @@
 
           '<div class="mono-label">PAY WITH</div>' +
           '<div style="display:flex;flex-direction:column;gap:7px">' +
-            method({ name: 'Apple Pay', note: 'FASTEST · FACE ID', on: true }) +
-            method({ name: 'Card · Visa ···· 4417', note: 'SAVED' }) +
-            method({ name: 'Venmo', note: '@MAYA-OKONKWO' }) +
+            method({ key: 'apple', name: 'Apple Pay', note: 'FASTEST · FACE ID' }) +
+            method({ key: 'card', name: 'Card · Visa ···· 4417', note: 'SAVED' }) +
+            method({ key: 'venmo', name: 'Venmo', note: '@MAYA-OKONKWO' }) +
             '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:1px dashed rgba(22,37,107,.22)">' +
               '<div style="width:36px;height:25px;border-radius:5px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 15px/1 var(--sans);color:var(--n-45)">+</div>' +
               '<div style="flex:1"><div style="font:600 13px/1.2 var(--sans);color:var(--n-70)">Google Pay, PayPal, Cash App, new card</div></div>' +

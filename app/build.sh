@@ -25,7 +25,7 @@ OUT=../index.html
   echo '<div id="shell-bar"></div>'
   echo '<div id="root"></div>'
   echo '<script>'
-  cat src/data.js src/ui.js \
+  cat src/data.js src/ui.js src/forms.js \
       src/screens/auth.js src/screens/main.js \
       src/screens/capture.js src/screens/teams.js \
       src/app.js

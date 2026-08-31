@@ -63,16 +63,19 @@
     render: function () {
       // Faded swatches are colors already claimed in this game.
       var swatches = [
-        { c: 'var(--green)', taken: true },
-        { c: 'var(--red)', taken: true },
-        { c: 'var(--team-purple)', taken: true },
-        { c: 'var(--team-blue)', taken: true },
-        { c: 'var(--team-amber)', on: true },
-        { c: 'var(--navy)' }
+        { c: '#12A66B', taken: true },
+        { c: '#E8332A', taken: true },
+        { c: '#7C3AED', taken: true },
+        { c: '#1F79F5', taken: true },
+        { c: '#F0A500' },
+        { c: '#16256B' }
       ].map(function (s) {
-        return '<div style="width:44px;height:44px;border-radius:10px;background:' + s.c +
-          (s.taken ? ';opacity:.35' : '') +
-          (s.on ? ';box-shadow:0 0 0 2px var(--cream),0 0 0 4px var(--navy)' : '') + '"></div>';
+        // Taken colors render faded and aren't selectable.
+        if (s.taken) {
+          return '<div class="pick--swatch is-taken" style="background:' + s.c + '"></div>';
+        }
+        return S.forms.pick('newteam.color', s.c, '', 'pick--swatch') .replace(
+          'class="pick pick--swatch"', 'class="pick pick--swatch" style="background:' + s.c + '"');
       }).join('');
 
       var slots = [0, 1, 2, 3].map(function () {
@@ -91,9 +94,9 @@
 
           '<div>' +
             '<div class="field-label" style="color:var(--n-50)">TEAM NAME</div>' +
-            '<div style="height:50px;border-radius:11px;background:#fff;border:1px solid var(--gold);display:flex;align-items:center;justify-content:space-between;padding:0 14px">' +
-              '<div style="font:600 15px/1 var(--sans)">Breakwater</div>' +
-              '<div style="font:400 10px/1 var(--mono);color:var(--green)">AVAILABLE</div>' +
+            '<div class="field" style="height:50px;background:#fff;border-color:var(--n-14);justify-content:space-between">' +
+              S.forms.input({ bind: 'newteam.name', cls: 'inp--teamname', placeholder: 'Team name', maxlength: 18 }) +
+              '<div style="font:400 10px/1 var(--mono);color:var(--green);flex:none">AVAILABLE</div>' +
             '</div>' +
           '</div>' +
 
@@ -138,7 +141,7 @@
         '</div>' +
 
         '<div style="padding:12px 22px 12px">' +
-          '<button class="cta" data-go="team">PAY $5 &amp; CREATE TEAM</button>' +
+          '<button class="cta" data-cta="newteam" data-muted="ink" data-go="team">PAY $5 &amp; CREATE TEAM</button>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';

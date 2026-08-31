@@ -407,3 +407,185 @@ body {
 [data-go] { cursor: pointer; }
 [data-go]:hover { filter: brightness(.97); }
 .tab:hover .tab__label { color: var(--navy); }
+
+/* ==========================================================================
+   Interactive form controls
+   ========================================================================== */
+
+/* Text inputs sit inside the existing .field wrapper and inherit its type. */
+.inp {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-family: var(--sans);
+}
+.inp::placeholder { color: currentColor; opacity: .45; }
+.inp[type="password"] { font-size: 17px; letter-spacing: .22em; }
+
+/* Gold border on the focused field — the mockups' own focus signal. */
+.field:focus-within { border-color: var(--gold); }
+
+.field-line {
+  height: 42px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--n-14);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font: 400 13.5px/1 var(--sans);
+  color: var(--navy);
+}
+.field-line:focus-within { border-color: var(--gold); }
+
+.reveal {
+  font: 500 11px/1 var(--mono);
+  color: var(--c-55);
+  cursor: pointer;
+  user-select: none;
+  flex: none;
+  padding-left: 10px;
+}
+
+/* ---- Segmented code entry ------------------------------------------------ */
+
+.codes { position: relative; display: flex; gap: 8px; }
+
+.codes__in {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  z-index: 2;
+  cursor: text;
+  font-size: 16px; /* keeps iOS from zooming on focus */
+}
+
+.code-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 26px/1 var(--serif);
+}
+
+/* Verify phone — navy screen */
+.codes--navy .code-box {
+  height: 62px;
+  border-radius: 11px;
+  background: var(--c-07);
+  border: 1px solid rgba(252, 247, 234, .14);
+  color: var(--cream);
+}
+.codes--navy .code-box--on { border-color: rgba(252, 247, 234, .2); }
+.codes--navy .code-box--next { border-color: var(--gold); }
+
+/* Join game — cream screen */
+.codes--light .code-box {
+  height: 60px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--n-14);
+  color: var(--navy);
+}
+.codes--light .code-box--on { border-color: var(--n-18); }
+.codes--light .code-box--next { border: 2px solid var(--gold); }
+
+.codes__in:focus + .code-box ~ .code-box--next,
+.codes__in:focus ~ .code-box--next { box-shadow: 0 0 0 3px rgba(255, 181, 36, .22); }
+
+/* ---- Selection controls -------------------------------------------------- */
+
+.pick { cursor: pointer; }
+
+/* Grade pills */
+.pick--grade {
+  flex: 1;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--c-07);
+  border: 1px solid var(--c-18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 13px/1 var(--sans);
+}
+.pick--grade.is-on { background: rgba(255, 181, 36, .18); border-color: var(--gold); }
+
+/* Payment methods */
+.pick--pay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--n-12);
+}
+.pick--pay.is-on { border: 2px solid var(--gold); padding: 11px 13px; }
+.pick--pay .pick__tick { display: none; }
+.pick--pay.is-on .pick__tick {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gold);
+  align-items: center;
+  justify-content: center;
+  font: 700 11px/1 var(--sans);
+  color: var(--navy);
+}
+
+/* Team color swatches */
+.pick--swatch { width: 44px; height: 44px; border-radius: 10px; }
+.pick--swatch.is-on { box-shadow: 0 0 0 2px var(--cream), 0 0 0 4px var(--navy); }
+.pick--swatch.is-taken { opacity: .35; cursor: not-allowed; }
+
+/* Filter chips */
+.pick--chip {
+  padding: 7px 12px;
+  border-radius: 99px;
+  font: 500 11.5px/1 var(--sans);
+  border: 1px solid var(--c-35);
+}
+.pick--chip.is-on { background: var(--cream); color: var(--navy); font-weight: 600; border-color: transparent; }
+
+/* Consent checkbox */
+.cbx {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--c-50);
+  flex: none;
+  margin-top: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cbx__tick { display: none; font: 700 10px/1 var(--sans); color: var(--navy); }
+.cbx.is-on { background: var(--gold); border-color: var(--gold); }
+.cbx.is-on .cbx__tick { display: block; }
+
+/* A gated CTA that isn't ready yet shouldn't look clickable. */
+.cta:disabled { cursor: default; }
+
+/* Empty-state row for a search that matches nothing */
+.empty {
+  padding: 22px 14px;
+  text-align: center;
+  font: 400 12px/1.5 var(--sans);
+  color: var(--n-50);
+}
+
+.inp--teamname { font: 600 15px/1 var(--sans); color: var(--navy); }

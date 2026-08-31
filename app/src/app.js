@@ -67,14 +67,25 @@
 
   function currentId() { return current; }
 
-  function render() {
+  // `keepFocus` re-focuses the named field after a repaint so typing in a
+  // search box that filters a list doesn't drop the caret.
+  function render(keepFocus, caret) {
     if (current) {
       bar.innerHTML = shellBar('focus', S.screens[current]);
       root.innerHTML = focusView(current);
-      window.scrollTo(0, 0);
     } else {
       bar.innerHTML = shellBar('gallery');
       root.innerHTML = galleryView();
+    }
+    S.forms.refresh(root);
+
+    if (keepFocus) {
+      var el = root.querySelector('[data-bind="' + keepFocus + '"]');
+      if (el) {
+        el.focus();
+        var at = caret == null ? el.value.length : caret;
+        try { el.setSelectionRange(at, at); } catch (e) { /* type has no caret */ }
+      }
     }
   }
 
@@ -88,6 +99,7 @@
       /* fragment unavailable — state still drives the view */
     }
     render();
+    window.scrollTo(0, 0); // only on navigation, never on an in-place repaint
   }
 
   function step(delta) {
@@ -134,6 +146,9 @@
     root = document.getElementById('root');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
+    S.forms.bind(root, function (what, bindPath, caret) {
+      if (what === 'repaint') render(bindPath, caret);
+    });
     // Back/forward and hand-typed deep links sync state back from the hash.
     window.addEventListener('hashchange', function () {
       var id = idFromHash();

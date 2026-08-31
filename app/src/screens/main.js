@@ -283,11 +283,21 @@
   S.screens.participants = {
     id: 'participants', code: '1x', label: 'Participants',
     render: function () {
-      var chips = ['Everyone', 'Alive', 'Out'].map(function (c, i) {
-        return '<div class="chip' + (i === 0 ? ' chip--on' : '') + '">' + c + '</div>';
+      var chips = ['Everyone', 'Alive', 'Out'].map(function (c) {
+        return S.forms.pick('filters.participants', c, c, 'pick--chip');
       }).join('');
 
-      var rows = S.data.participants.map(function (p) {
+      // Search and the Alive/Out chips both narrow the list for real.
+      var mode = S.formState.filters.participants;
+      var q = S.formState.search.participants.trim().toLowerCase();
+      var shown = S.data.participants.filter(function (p) {
+        if (mode === 'Alive' && p.out) return false;
+        if (mode === 'Out' && !p.out) return false;
+        if (q && (p.name + ' ' + p.meta).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+
+      var rows = shown.map(function (p) {
         return '<div class="row" data-go="profile">' +
           '<div class="avatar hatch-av" style="width:34px;height:34px' + (p.out ? ';opacity:.45' : '') + '"></div>' +
           '<div style="flex:1" class="' + (p.out ? 'is-out' : '') + '">' +
@@ -309,8 +319,11 @@
           '<div class="hdr__chips">' + chips + '</div>' +
         '</div>' +
         '<div style="flex:1;overflow:hidden;padding:13px 20px 0;display:flex;flex-direction:column;gap:9px">' +
-          '<div style="height:42px;border-radius:10px;background:#fff;border:1px solid var(--n-14);display:flex;align-items:center;padding:0 14px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Search players</div>' +
-          '<div class="card">' + rows + '</div>' +
+          '<div class="field-line">' +
+            S.forms.input({ bind: 'search.participants', placeholder: 'Search players', live: true }) +
+          '</div>' +
+          '<div class="card">' + (rows ||
+            '<div class="empty">No players match “' + S.esc(S.formState.search.participants) + '”.</div>') + '</div>' +
         '</div>' +
         S.tabBar('participants') +
       '</div>';
