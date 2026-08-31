@@ -113,6 +113,24 @@
   /* ---- events ----------------------------------------------------------- */
 
   function onClick(e) {
+    // One-time-code actions resolve async, then repaint.
+    var act = e.target.closest('[data-action]');
+    if (act) {
+      var name = act.getAttribute('data-action');
+      if (name === 'request-code' || name === 'resend-code') {
+        S.otp.request(S.formState.signup.phone).then(function (r) {
+          if (r.ok) { S.formState.verify.code = ''; go('verify'); }
+          else render();
+        });
+      } else if (name === 'verify-code') {
+        S.otp.verify(S.formState.verify.code).then(function (r) {
+          if (r.ok) go('join');
+          else render();
+        });
+      }
+      return;
+    }
+
     var nav = e.target.closest('[data-nav]');
     if (nav) {
       var what = nav.getAttribute('data-nav');
@@ -156,6 +174,21 @@
     });
     current = idFromHash();
     render();
+
+    // Ticks the resend cooldown / expiry line without re-rendering the screen.
+    setInterval(function () {
+      var el = root.querySelector('[data-otp-countdown]');
+      if (!el || !S.otp.state.sentAt) return;
+      var cd = S.otp.cooldownLeft();
+      if (cd > 0) {
+        el.textContent = 'RESEND IN 0:' + String(cd).padStart(2, '0');
+      } else if (S.otp.isExpired()) {
+        el.textContent = 'CODE EXPIRED';
+      } else {
+        var left = S.otp.secondsLeft();
+        el.textContent = 'EXPIRES IN ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+      }
+    }, 1000);
   }
 
   if (document.readyState === 'loading') {

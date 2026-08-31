@@ -589,3 +589,39 @@ body {
 }
 
 .inp--teamname { font: 600 15px/1 var(--sans); color: var(--navy); }
+
+/* ---- One-time code ------------------------------------------------------- */
+
+.form-error {
+  text-align: center;
+  font: 500 11.5px/1.45 var(--sans);
+  color: var(--red-soft);
+  margin-top: 12px;
+}
+.form-error--left { text-align: left; margin-top: 10px; }
+
+/* Local mode has no carrier, so the generated code is shown instead of sent.
+   Loud on purpose — this must never be mistaken for real delivery. */
+.dev-code {
+  margin-top: 22px;
+  padding: 13px 15px;
+  border-radius: 11px;
+  background: rgba(255, 181, 36, .12);
+  border: 1px dashed rgba(255, 181, 36, .55);
+}
+.dev-code__tag {
+  font: 500 9px/1 var(--mono);
+  letter-spacing: .12em;
+  color: var(--gold-light);
+}
+.dev-code__val {
+  font: 700 30px/1 var(--serif);
+  letter-spacing: .18em;
+  color: var(--cream);
+  margin-top: 9px;
+}
+.dev-code__note {
+  font: 400 10.5px/1.45 var(--sans);
+  color: var(--c-60);
+  margin-top: 8px;
+}

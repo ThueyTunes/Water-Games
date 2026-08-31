@@ -681,6 +681,42 @@ body {
 }
 
 .inp--teamname { font: 600 15px/1 var(--sans); color: var(--navy); }
+
+/* ---- One-time code ------------------------------------------------------- */
+
+.form-error {
+  text-align: center;
+  font: 500 11.5px/1.45 var(--sans);
+  color: var(--red-soft);
+  margin-top: 12px;
+}
+.form-error--left { text-align: left; margin-top: 10px; }
+
+/* Local mode has no carrier, so the generated code is shown instead of sent.
+   Loud on purpose — this must never be mistaken for real delivery. */
+.dev-code {
+  margin-top: 22px;
+  padding: 13px 15px;
+  border-radius: 11px;
+  background: rgba(255, 181, 36, .12);
+  border: 1px dashed rgba(255, 181, 36, .55);
+}
+.dev-code__tag {
+  font: 500 9px/1 var(--mono);
+  letter-spacing: .12em;
+  color: var(--gold-light);
+}
+.dev-code__val {
+  font: 700 30px/1 var(--serif);
+  letter-spacing: .18em;
+  color: var(--cream);
+  margin-top: 9px;
+}
+.dev-code__note {
+  font: 400 10.5px/1.45 var(--sans);
+  color: var(--c-60);
+  margin-top: 8px;
+}
 </style>
 </head>
 <body>
@@ -1104,6 +1140,180 @@ window.S = window.S || {};
     refresh(root);
   };
 })(window.S);
+/* One-time-code lifecycle: generate, deliver, expire, verify, rate-limit.
+
+   DELIVERY IS PLUGGABLE. Out of the box this runs in 'local' mode: a real
+   random code is generated and shown on screen, because a static site has no
+   server and therefore no safe way to hold an SMS credential.
+
+   To send real texts, stand up the serverless function in docs/sms-backend.md
+   and set S.otp.endpoint to its URL. The provider credential lives in that
+   function's environment — never in this file, and never in the repo. */
+
+(function (S) {
+  'use strict';
+
+  var otp = S.otp = {};
+
+  // null = local mode. A string = POST {phone} to this URL to send a real SMS.
+  otp.endpoint = null;
+
+  otp.TTL_SECONDS = 600;      // code is good for 10 minutes
+  otp.COOLDOWN_SECONDS = 30;  // minimum gap between sends
+  otp.MAX_ATTEMPTS = 5;       // wrong guesses before the code is burned
+
+  otp.state = {
+    code: null,      // held client-side only in local mode
+    phone: '',
+    sentAt: 0,
+    attempts: 0,
+    error: '',
+    notice: '',
+    sending: false,
+    verified: false
+  };
+
+  function now() { return Math.floor(Date.now() / 1000); }
+
+  // Cryptographically random, not Math.random — this is a credential.
+  function generate() {
+    var a = new Uint32Array(1);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return String(a[0] % 1000000).padStart(6, '0');
+  }
+
+  otp.secondsLeft = function () {
+    if (!otp.state.sentAt) return 0;
+    return Math.max(0, otp.TTL_SECONDS - (now() - otp.state.sentAt));
+  };
+
+  otp.cooldownLeft = function () {
+    if (!otp.state.sentAt) return 0;
+    return Math.max(0, otp.COOLDOWN_SECONDS - (now() - otp.state.sentAt));
+  };
+
+  otp.isExpired = function () {
+    return !!otp.state.sentAt && otp.secondsLeft() === 0;
+  };
+
+  /* ---- request ---------------------------------------------------------- */
+
+  otp.request = function (phone) {
+    var digits = String(phone || '').replace(/\D/g, '');
+    if (digits.length !== 10) {
+      otp.state.error = 'Enter a 10-digit US mobile number first.';
+      return Promise.resolve({ ok: false });
+    }
+    if (otp.cooldownLeft() > 0) {
+      otp.state.error = 'Hold on — you can resend in ' + otp.cooldownLeft() + 's.';
+      return Promise.resolve({ ok: false });
+    }
+
+    otp.state.sending = true;
+    otp.state.error = '';
+    otp.state.phone = digits;
+    otp.state.attempts = 0;
+
+    // Real delivery: the server owns the code, so we never see it here.
+    if (otp.endpoint) {
+      return fetch(otp.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: '+1' + digits })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('send failed (' + r.status + ')');
+        otp.state.code = null;
+        otp.state.sentAt = now();
+        otp.state.notice = 'Code sent to ' + S.formatPhone(digits) + '.';
+        return { ok: true };
+      }).catch(function (e) {
+        otp.state.error = "Couldn't send the code: " + e.message;
+        return { ok: false };
+      }).then(function (res) {
+        otp.state.sending = false;
+        return res;
+      });
+    }
+
+    // Local mode: generate here and surface it in the UI.
+    otp.state.code = generate();
+    otp.state.sentAt = now();
+    otp.state.sending = false;
+    otp.state.notice = '';
+    return Promise.resolve({ ok: true });
+  };
+
+  /* ---- verify ----------------------------------------------------------- */
+
+  otp.verify = function (entered) {
+    var v = String(entered || '');
+    if (v.length !== 6) {
+      otp.state.error = 'Enter all six digits.';
+      return Promise.resolve({ ok: false });
+    }
+    if (!otp.state.sentAt) {
+      otp.state.error = 'Request a code first.';
+      return Promise.resolve({ ok: false });
+    }
+    if (otp.isExpired()) {
+      otp.state.error = 'That code expired. Send a new one.';
+      return Promise.resolve({ ok: false });
+    }
+    if (otp.state.attempts >= otp.MAX_ATTEMPTS) {
+      otp.state.error = 'Too many tries. Send a new code.';
+      return Promise.resolve({ ok: false });
+    }
+
+    // Real delivery: only the server can say whether the code is right.
+    if (otp.endpoint) {
+      return fetch(otp.endpoint + '/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: '+1' + otp.state.phone, code: v })
+      }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.ok) {
+            otp.state.attempts++;
+            otp.state.error = 'That code is not right. ' +
+              (otp.MAX_ATTEMPTS - otp.state.attempts) + ' tries left.';
+            return { ok: false };
+          }
+          otp.state.verified = true;
+          otp.state.error = '';
+          return { ok: true };
+        })
+        .catch(function (e) {
+          otp.state.error = "Couldn't check that code: " + e.message;
+          return { ok: false };
+        });
+    }
+
+    if (v !== otp.state.code) {
+      otp.state.attempts++;
+      var left = otp.MAX_ATTEMPTS - otp.state.attempts;
+      otp.state.error = left > 0
+        ? 'That code is not right. ' + left + (left === 1 ? ' try left.' : ' tries left.')
+        : 'Too many tries. Send a new code.';
+      return Promise.resolve({ ok: false });
+    }
+
+    otp.state.verified = true;
+    otp.state.error = '';
+    return Promise.resolve({ ok: true });
+  };
+
+  otp.reset = function () {
+    otp.state.code = null;
+    otp.state.sentAt = 0;
+    otp.state.attempts = 0;
+    otp.state.error = '';
+    otp.state.notice = '';
+    otp.state.verified = false;
+  };
+
+  // True when no real SMS provider is configured.
+  otp.isLocal = function () { return !otp.endpoint; };
+})(window.S);
 /* Sign up → verify → sign in → join game → payment.
    The tab bar is off the auth and payment screens except where the mockup
    explicitly draws it (Join game keeps it, inert). */
@@ -1179,8 +1389,10 @@ window.S = window.S || {};
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="signup" data-go="verify">TEXT ME A CODE</button>' +
-          '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>' +
+          '<button class="cta" data-cta="signup" data-action="request-code">TEXT ME A CODE</button>' +
+          (S.otp.state.error
+            ? '<div class="form-error">' + S.esc(S.otp.state.error) + '</div>'
+            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>') +
         '</div>' +
       '</div>';
     }
@@ -1195,20 +1407,38 @@ window.S = window.S || {};
         bind: 'verify.code', len: 6, kind: 'digit', theme: 'navy', label: 'One-time code'
       });
 
+      var st = S.otp.state;
+      var sentTo = st.phone ? S.formatPhone(st.phone) : S.formatPhone(S.formState.signup.phone);
+
       return '<div class="screen screen--navy">' +
         '<div class="jersey"></div>' +
         '<div style="position:relative;flex:1;overflow:hidden;padding:66px 26px 0;display:flex;flex-direction:column">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="signup">&lsaquo; Back</div>' +
           '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your texts</div>' +
-          '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to (415) 555-0182 to confirm your number. You won’t need a code again — just your password.</div>' +
-          '<div style="margin-top:30px">' + boxes + '</div>' +
+          '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to ' +
+            S.esc(sentTo) + ' to confirm your number. You won’t need a code again — just your password.</div>' +
+
+          // Local mode has no carrier to hand the code to, so it surfaces here.
+          (S.otp.isLocal() && st.code
+            ? '<div class="dev-code">' +
+                '<div class="dev-code__tag">PROTOTYPE · NO SMS PROVIDER CONFIGURED</div>' +
+                '<div class="dev-code__val">' + st.code + '</div>' +
+                '<div class="dev-code__note">A real code was generated and is shown here instead of being texted.</div>' +
+              '</div>'
+            : '') +
+
+          '<div style="margin-top:' + (S.otp.isLocal() && st.code ? '18px' : '30px') + '">' + boxes + '</div>' +
+          (st.error ? '<div class="form-error form-error--left">' + S.esc(st.error) + '</div>' : '') +
+
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px">' +
-            '<div style="font:400 11px/1 var(--mono);color:var(--c-45)">RESEND IN 0:24</div>' +
-            '<div style="font:500 12.5px/1 var(--sans);color:var(--gold-light)">Wrong number?</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-45)" data-otp-countdown>' +
+              (st.sentAt ? 'RESEND IN 0:' + String(S.otp.cooldownLeft()).padStart(2, '0') : 'NO CODE SENT YET') +
+            '</div>' +
+            '<div style="font:500 12.5px/1 var(--sans);color:var(--gold-light)" data-action="resend-code">Resend code</div>' +
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="verify" data-go="join">CONTINUE</button>' +
+          '<button class="cta" data-cta="verify" data-action="verify-code">CONTINUE</button>' +
         '</div>' +
       '</div>';
     }
@@ -2478,6 +2708,24 @@ window.S = window.S || {};
   /* ---- events ----------------------------------------------------------- */
 
   function onClick(e) {
+    // One-time-code actions resolve async, then repaint.
+    var act = e.target.closest('[data-action]');
+    if (act) {
+      var name = act.getAttribute('data-action');
+      if (name === 'request-code' || name === 'resend-code') {
+        S.otp.request(S.formState.signup.phone).then(function (r) {
+          if (r.ok) { S.formState.verify.code = ''; go('verify'); }
+          else render();
+        });
+      } else if (name === 'verify-code') {
+        S.otp.verify(S.formState.verify.code).then(function (r) {
+          if (r.ok) go('join');
+          else render();
+        });
+      }
+      return;
+    }
+
     var nav = e.target.closest('[data-nav]');
     if (nav) {
       var what = nav.getAttribute('data-nav');
@@ -2521,6 +2769,21 @@ window.S = window.S || {};
     });
     current = idFromHash();
     render();
+
+    // Ticks the resend cooldown / expiry line without re-rendering the screen.
+    setInterval(function () {
+      var el = root.querySelector('[data-otp-countdown]');
+      if (!el || !S.otp.state.sentAt) return;
+      var cd = S.otp.cooldownLeft();
+      if (cd > 0) {
+        el.textContent = 'RESEND IN 0:' + String(cd).padStart(2, '0');
+      } else if (S.otp.isExpired()) {
+        el.textContent = 'CODE EXPIRED';
+      } else {
+        var left = S.otp.secondsLeft();
+        el.textContent = 'EXPIRES IN ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+      }
+    }, 1000);
   }
 
   if (document.readyState === 'loading') {

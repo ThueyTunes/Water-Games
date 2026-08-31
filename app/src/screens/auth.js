@@ -73,8 +73,10 @@
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="signup" data-go="verify">TEXT ME A CODE</button>' +
-          '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>' +
+          '<button class="cta" data-cta="signup" data-action="request-code">TEXT ME A CODE</button>' +
+          (S.otp.state.error
+            ? '<div class="form-error">' + S.esc(S.otp.state.error) + '</div>'
+            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>') +
         '</div>' +
       '</div>';
     }
@@ -89,20 +91,38 @@
         bind: 'verify.code', len: 6, kind: 'digit', theme: 'navy', label: 'One-time code'
       });
 
+      var st = S.otp.state;
+      var sentTo = st.phone ? S.formatPhone(st.phone) : S.formatPhone(S.formState.signup.phone);
+
       return '<div class="screen screen--navy">' +
         '<div class="jersey"></div>' +
         '<div style="position:relative;flex:1;overflow:hidden;padding:66px 26px 0;display:flex;flex-direction:column">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="signup">&lsaquo; Back</div>' +
           '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your texts</div>' +
-          '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to (415) 555-0182 to confirm your number. You won’t need a code again — just your password.</div>' +
-          '<div style="margin-top:30px">' + boxes + '</div>' +
+          '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to ' +
+            S.esc(sentTo) + ' to confirm your number. You won’t need a code again — just your password.</div>' +
+
+          // Local mode has no carrier to hand the code to, so it surfaces here.
+          (S.otp.isLocal() && st.code
+            ? '<div class="dev-code">' +
+                '<div class="dev-code__tag">PROTOTYPE · NO SMS PROVIDER CONFIGURED</div>' +
+                '<div class="dev-code__val">' + st.code + '</div>' +
+                '<div class="dev-code__note">A real code was generated and is shown here instead of being texted.</div>' +
+              '</div>'
+            : '') +
+
+          '<div style="margin-top:' + (S.otp.isLocal() && st.code ? '18px' : '30px') + '">' + boxes + '</div>' +
+          (st.error ? '<div class="form-error form-error--left">' + S.esc(st.error) + '</div>' : '') +
+
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px">' +
-            '<div style="font:400 11px/1 var(--mono);color:var(--c-45)">RESEND IN 0:24</div>' +
-            '<div style="font:500 12.5px/1 var(--sans);color:var(--gold-light)">Wrong number?</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-45)" data-otp-countdown>' +
+              (st.sentAt ? 'RESEND IN 0:' + String(S.otp.cooldownLeft()).padStart(2, '0') : 'NO CODE SENT YET') +
+            '</div>' +
+            '<div style="font:500 12.5px/1 var(--sans);color:var(--gold-light)" data-action="resend-code">Resend code</div>' +
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="verify" data-go="join">CONTINUE</button>' +
+          '<button class="cta" data-cta="verify" data-action="verify-code">CONTINUE</button>' +
         '</div>' +
       '</div>';
     }
