@@ -2,18 +2,18 @@
 
    DELIVERY IS PLUGGABLE. Out of the box this runs in 'local' mode: a real
    random code is generated and shown on screen, because a static site has no
-   server and therefore no safe way to hold an SMS credential.
+   server and therefore nowhere safe to keep a mail credential.
 
-   To send real texts, stand up the serverless function in docs/sms-backend.md
-   and set S.otp.endpoint to its URL. The provider credential lives in that
-   function's environment — never in this file, and never in the repo. */
+   To send real email, deploy email-backend/ (Gmail SMTP via an App Password)
+   and set S.otp.endpoint to its URL. The credential lives in that function's
+   environment — never in this file, and never in the repo. */
 
 (function (S) {
   'use strict';
 
   var otp = S.otp = {};
 
-  // null = local mode. A string = POST {phone} to this URL to send a real SMS.
+  // null = local mode. A string = POST {email} to this URL to send real mail.
   otp.endpoint = null;
 
   otp.TTL_SECONDS = 600;      // code is good for 10 minutes
@@ -22,7 +22,7 @@
 
   otp.state = {
     code: null,      // held client-side only in local mode
-    phone: '',
+    email: '',
     sentAt: 0,
     attempts: 0,
     error: '',
@@ -56,10 +56,10 @@
 
   /* ---- request ---------------------------------------------------------- */
 
-  otp.request = function (phone) {
-    var digits = String(phone || '').replace(/\D/g, '');
-    if (digits.length !== 10) {
-      otp.state.error = 'Enter a 10-digit US mobile number first.';
+  otp.request = function (email) {
+    var addr = String(email || '').trim().toLowerCase();
+    if (!S.isEmail(addr)) {
+      otp.state.error = 'Enter a valid email address first.';
       return Promise.resolve({ ok: false });
     }
     if (otp.cooldownLeft() > 0) {
@@ -69,7 +69,7 @@
 
     otp.state.sending = true;
     otp.state.error = '';
-    otp.state.phone = digits;
+    otp.state.email = addr;
     otp.state.attempts = 0;
 
     // Real delivery: the server owns the code, so we never see it here.
@@ -77,12 +77,12 @@
       return fetch(otp.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '+1' + digits })
+        body: JSON.stringify({ email: addr })
       }).then(function (r) {
         if (!r.ok) throw new Error('send failed (' + r.status + ')');
         otp.state.code = null;
         otp.state.sentAt = now();
-        otp.state.notice = 'Code sent to ' + S.formatPhone(digits) + '.';
+        otp.state.notice = 'Code sent to ' + addr + '.';
         return { ok: true };
       }).catch(function (e) {
         otp.state.error = "Couldn't send the code: " + e.message;
@@ -124,10 +124,10 @@
 
     // Real delivery: only the server can say whether the code is right.
     if (otp.endpoint) {
-      return fetch(otp.endpoint + '/verify', {
+      return fetch(otp.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '+1' + otp.state.phone, code: v })
+        body: JSON.stringify({ email: otp.state.email, code: v })
       }).then(function (r) { return r.json(); })
         .then(function (j) {
           if (!j.ok) {
@@ -169,6 +169,6 @@
     otp.state.verified = false;
   };
 
-  // True when no real SMS provider is configured.
+  // True when no mail provider is configured.
   otp.isLocal = function () { return !otp.endpoint; };
 })(window.S);

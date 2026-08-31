@@ -12,10 +12,10 @@
   // placeholder text carries the hint the mockup's dummy values used to.
 
   S.formState = {
-    signup:  { phone: '', first: '', last: '', password: '',
+    signup:  { email: '', first: '', last: '', password: '',
                grade: '', agree: false, showPw: false },
     verify:  { code: '' },
-    signin:  { phone: '', password: '', showPw: false },
+    signin:  { email: '', password: '', showPw: false },
     join:    { code: '', teamCode: '' },
     payment: { method: 'apple' },
     newteam: { name: '', color: '#F0A500' },
@@ -76,27 +76,22 @@
     if (S.formState[p[0]]) S.formState[p[0]][p[1]] = v;
   }
 
-  var digits = function (v) { return String(v || '').replace(/\D/g, ''); };
-
-  // (415) 555-0182 — formats progressively as you type.
-  function formatPhone(raw) {
-    var d = digits(raw).slice(0, 10);
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3);
-    return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
-  }
-  S.formatPhone = formatPhone;
+  // Deliberately permissive — the only authority on whether an address works
+  // is whether the code arrives. This just catches obvious typos.
+  S.isEmail = function (v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim());
+  };
 
   /* ---- validity --------------------------------------------------------- */
 
   var VALID = {
     signup: function (s) {
-      return digits(s.signup.phone).length === 10 &&
+      return S.isEmail(s.signup.email) &&
         s.signup.first.trim() !== '' && s.signup.last.trim() !== '' &&
         s.signup.password.length >= 8 && !!s.signup.grade && s.signup.agree;
     },
     verify: function (s) { return s.verify.code.length === 6; },
-    signin: function (s) { return digits(s.signin.phone).length === 10 && s.signin.password.length > 0; },
+    signin: function (s) { return S.isEmail(s.signin.email) && s.signin.password.length > 0; },
     join:   function (s) { return s.join.code.length === 6; },
     newteam:function (s) { return s.newteam.name.trim() !== '' && !!s.newteam.color; }
   };
@@ -109,11 +104,9 @@
   // A text input that fills its .field wrapper.
   S.forms.input = function (o) {
     var v = o.value !== undefined ? o.value : get(o.bind);
-    if (o.format === 'phone') v = formatPhone(v);
     return '<input class="inp' + (o.cls ? ' ' + o.cls : '') + '"' +
       ' type="' + (o.type || 'text') + '"' +
       ' data-bind="' + o.bind + '"' +
-      (o.format ? ' data-format="' + o.format + '"' : '') +
       ' value="' + S.esc(v) + '"' +
       (o.live ? ' data-live="1"' : '') +
       (o.enter ? ' data-enter="' + o.enter + '"' : '') +
@@ -187,13 +180,7 @@
     root.addEventListener('input', function (e) {
       var el = e.target;
       if (el.classList.contains('inp')) {
-        if (el.getAttribute('data-format') === 'phone') {
-          var d = digits(el.value).slice(0, 10);
-          set(el.getAttribute('data-bind'), d);
-          el.value = formatPhone(d);
-        } else {
-          set(el.getAttribute('data-bind'), el.value);
-        }
+        set(el.getAttribute('data-bind'), el.value);
         // A "live" field changes what the screen lists, so it needs a real
         // re-render; the router restores focus and caret afterwards.
         if (el.getAttribute('data-live') && onNavigate) {

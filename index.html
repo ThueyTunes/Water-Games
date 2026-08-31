@@ -966,10 +966,10 @@ window.S = window.S || {};
   // placeholder text carries the hint the mockup's dummy values used to.
 
   S.formState = {
-    signup:  { phone: '', first: '', last: '', password: '',
+    signup:  { email: '', first: '', last: '', password: '',
                grade: '', agree: false, showPw: false },
     verify:  { code: '' },
-    signin:  { phone: '', password: '', showPw: false },
+    signin:  { email: '', password: '', showPw: false },
     join:    { code: '', teamCode: '' },
     payment: { method: 'apple' },
     newteam: { name: '', color: '#F0A500' },
@@ -1030,27 +1030,22 @@ window.S = window.S || {};
     if (S.formState[p[0]]) S.formState[p[0]][p[1]] = v;
   }
 
-  var digits = function (v) { return String(v || '').replace(/\D/g, ''); };
-
-  // (415) 555-0182 — formats progressively as you type.
-  function formatPhone(raw) {
-    var d = digits(raw).slice(0, 10);
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3);
-    return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
-  }
-  S.formatPhone = formatPhone;
+  // Deliberately permissive — the only authority on whether an address works
+  // is whether the code arrives. This just catches obvious typos.
+  S.isEmail = function (v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || '').trim());
+  };
 
   /* ---- validity --------------------------------------------------------- */
 
   var VALID = {
     signup: function (s) {
-      return digits(s.signup.phone).length === 10 &&
+      return S.isEmail(s.signup.email) &&
         s.signup.first.trim() !== '' && s.signup.last.trim() !== '' &&
         s.signup.password.length >= 8 && !!s.signup.grade && s.signup.agree;
     },
     verify: function (s) { return s.verify.code.length === 6; },
-    signin: function (s) { return digits(s.signin.phone).length === 10 && s.signin.password.length > 0; },
+    signin: function (s) { return S.isEmail(s.signin.email) && s.signin.password.length > 0; },
     join:   function (s) { return s.join.code.length === 6; },
     newteam:function (s) { return s.newteam.name.trim() !== '' && !!s.newteam.color; }
   };
@@ -1063,11 +1058,9 @@ window.S = window.S || {};
   // A text input that fills its .field wrapper.
   S.forms.input = function (o) {
     var v = o.value !== undefined ? o.value : get(o.bind);
-    if (o.format === 'phone') v = formatPhone(v);
     return '<input class="inp' + (o.cls ? ' ' + o.cls : '') + '"' +
       ' type="' + (o.type || 'text') + '"' +
       ' data-bind="' + o.bind + '"' +
-      (o.format ? ' data-format="' + o.format + '"' : '') +
       ' value="' + S.esc(v) + '"' +
       (o.live ? ' data-live="1"' : '') +
       (o.enter ? ' data-enter="' + o.enter + '"' : '') +
@@ -1141,13 +1134,7 @@ window.S = window.S || {};
     root.addEventListener('input', function (e) {
       var el = e.target;
       if (el.classList.contains('inp')) {
-        if (el.getAttribute('data-format') === 'phone') {
-          var d = digits(el.value).slice(0, 10);
-          set(el.getAttribute('data-bind'), d);
-          el.value = formatPhone(d);
-        } else {
-          set(el.getAttribute('data-bind'), el.value);
-        }
+        set(el.getAttribute('data-bind'), el.value);
         // A "live" field changes what the screen lists, so it needs a real
         // re-render; the router restores focus and caret afterwards.
         if (el.getAttribute('data-live') && onNavigate) {
@@ -1213,18 +1200,18 @@ window.S = window.S || {};
 
    DELIVERY IS PLUGGABLE. Out of the box this runs in 'local' mode: a real
    random code is generated and shown on screen, because a static site has no
-   server and therefore no safe way to hold an SMS credential.
+   server and therefore nowhere safe to keep a mail credential.
 
-   To send real texts, stand up the serverless function in docs/sms-backend.md
-   and set S.otp.endpoint to its URL. The provider credential lives in that
-   function's environment — never in this file, and never in the repo. */
+   To send real email, deploy email-backend/ (Gmail SMTP via an App Password)
+   and set S.otp.endpoint to its URL. The credential lives in that function's
+   environment — never in this file, and never in the repo. */
 
 (function (S) {
   'use strict';
 
   var otp = S.otp = {};
 
-  // null = local mode. A string = POST {phone} to this URL to send a real SMS.
+  // null = local mode. A string = POST {email} to this URL to send real mail.
   otp.endpoint = null;
 
   otp.TTL_SECONDS = 600;      // code is good for 10 minutes
@@ -1233,7 +1220,7 @@ window.S = window.S || {};
 
   otp.state = {
     code: null,      // held client-side only in local mode
-    phone: '',
+    email: '',
     sentAt: 0,
     attempts: 0,
     error: '',
@@ -1267,10 +1254,10 @@ window.S = window.S || {};
 
   /* ---- request ---------------------------------------------------------- */
 
-  otp.request = function (phone) {
-    var digits = String(phone || '').replace(/\D/g, '');
-    if (digits.length !== 10) {
-      otp.state.error = 'Enter a 10-digit US mobile number first.';
+  otp.request = function (email) {
+    var addr = String(email || '').trim().toLowerCase();
+    if (!S.isEmail(addr)) {
+      otp.state.error = 'Enter a valid email address first.';
       return Promise.resolve({ ok: false });
     }
     if (otp.cooldownLeft() > 0) {
@@ -1280,7 +1267,7 @@ window.S = window.S || {};
 
     otp.state.sending = true;
     otp.state.error = '';
-    otp.state.phone = digits;
+    otp.state.email = addr;
     otp.state.attempts = 0;
 
     // Real delivery: the server owns the code, so we never see it here.
@@ -1288,12 +1275,12 @@ window.S = window.S || {};
       return fetch(otp.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '+1' + digits })
+        body: JSON.stringify({ email: addr })
       }).then(function (r) {
         if (!r.ok) throw new Error('send failed (' + r.status + ')');
         otp.state.code = null;
         otp.state.sentAt = now();
-        otp.state.notice = 'Code sent to ' + S.formatPhone(digits) + '.';
+        otp.state.notice = 'Code sent to ' + addr + '.';
         return { ok: true };
       }).catch(function (e) {
         otp.state.error = "Couldn't send the code: " + e.message;
@@ -1335,10 +1322,10 @@ window.S = window.S || {};
 
     // Real delivery: only the server can say whether the code is right.
     if (otp.endpoint) {
-      return fetch(otp.endpoint + '/verify', {
+      return fetch(otp.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '+1' + otp.state.phone, code: v })
+        body: JSON.stringify({ email: otp.state.email, code: v })
       }).then(function (r) { return r.json(); })
         .then(function (j) {
           if (!j.ok) {
@@ -1380,7 +1367,7 @@ window.S = window.S || {};
     otp.state.verified = false;
   };
 
-  // True when no real SMS provider is configured.
+  // True when no mail provider is configured.
   otp.isLocal = function () { return !otp.endpoint; };
 })(window.S);
 /* Sign up → verify → sign in → join game → payment.
@@ -1425,10 +1412,10 @@ window.S = window.S || {};
 
           '<div style="display:flex;flex-direction:column;gap:11px;margin-top:24px">' +
             '<div>' +
-              '<div class="field-label">PHONE NUMBER</div>' +
-              '<div class="field field--split">' +
-                S.forms.input({ bind: 'signup.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
-                '<div style="font:400 10px/1 var(--mono);color:var(--c-50);flex:none">US +1</div>' +
+              '<div class="field-label">EMAIL ADDRESS</div>' +
+              '<div class="field">' +
+                S.forms.input({ bind: 'signup.email', type: 'email', inputmode: 'email',
+                  placeholder: 'you@example.com' }) +
               '</div>' +
             '</div>' +
             '<div style="display:flex;gap:10px">' +
@@ -1458,41 +1445,41 @@ window.S = window.S || {};
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="signup" data-action="request-code">TEXT ME A CODE</button>' +
+          '<button class="cta" data-cta="signup" data-action="request-code">EMAIL ME A CODE</button>' +
           (S.otp.state.error
             ? '<div class="form-error">' + S.esc(S.otp.state.error) + '</div>'
-            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>') +
+            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR EMAIL</div>') +
         '</div>' +
       '</div>';
     }
   };
 
-  /* ---- 1r · Verify phone ------------------------------------------------ */
+  /* ---- 1r · Verify email ------------------------------------------------ */
 
   S.screens.verify = {
-    id: 'verify', code: '1r', label: 'Verify phone', dark: true,
+    id: 'verify', code: '1r', label: 'Verify email', dark: true,
     render: function () {
       var boxes = S.forms.codeRow({
         bind: 'verify.code', len: 6, kind: 'digit', theme: 'navy', label: 'One-time code'
       });
 
       var st = S.otp.state;
-      var sentTo = st.phone ? S.formatPhone(st.phone) : S.formatPhone(S.formState.signup.phone);
+      var sentTo = st.email || S.formState.signup.email || 'your email';
 
       return '<div class="screen screen--navy">' +
         '<div class="jersey"></div>' +
         '<div style="position:relative;flex:1;overflow:hidden;padding:66px 26px 0;display:flex;flex-direction:column">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="signup">&lsaquo; Back</div>' +
-          '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your texts</div>' +
+          '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your email</div>' +
           '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to ' +
-            S.esc(sentTo) + ' to confirm your number. You won’t need a code again — just your password.</div>' +
+            S.esc(sentTo) + ' to confirm your address. You won’t need a code again — just your password.</div>' +
 
-          // Local mode has no carrier to hand the code to, so it surfaces here.
+          // Local mode has no mail server, so the code surfaces here instead.
           (S.otp.isLocal() && st.code
             ? '<div class="dev-code">' +
-                '<div class="dev-code__tag">PROTOTYPE · NO SMS PROVIDER CONFIGURED</div>' +
+                '<div class="dev-code__tag">PROTOTYPE · NO MAIL PROVIDER CONFIGURED</div>' +
                 '<div class="dev-code__val">' + st.code + '</div>' +
-                '<div class="dev-code__note">A real code was generated and is shown here instead of being texted.</div>' +
+                '<div class="dev-code__note">A real code was generated and is shown here instead of being emailed.</div>' +
               '</div>'
             : '') +
 
@@ -1528,8 +1515,9 @@ window.S = window.S || {};
           '<div style="font:700 38px/1.08 var(--serif);margin-top:44px">' + S.esc(g[0]) + '<br/>' + S.esc(g[1]) + '</div>' +
 
           '<div style="display:flex;flex-direction:column;gap:10px;margin-top:28px">' +
-            '<div><div class="field-label">PHONE NUMBER</div><div class="field">' +
-              S.forms.input({ bind: 'signin.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
+            '<div><div class="field-label">EMAIL ADDRESS</div><div class="field">' +
+              S.forms.input({ bind: 'signin.email', type: 'email', inputmode: 'email',
+                placeholder: 'you@example.com' }) +
             '</div></div>' +
             '<div>' +
               '<div class="field-label">PASSWORD</div>' +
@@ -2956,7 +2944,7 @@ window.S = window.S || {};
     switch (name) {
       case 'request-code':
       case 'resend-code':
-        S.otp.request(fs.signup.phone).then(function (r) {
+        S.otp.request(fs.signup.email).then(function (r) {
           if (r.ok) { fs.verify.code = ''; go('verify'); } else render();
         });
         return;
@@ -3022,8 +3010,8 @@ window.S = window.S || {};
       case 'logout':
         S.otp.reset();
         S.resetSession();
-        fs.signup = { phone: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
-        fs.signin = { phone: '', password: '', showPw: false };
+        fs.signup = { email: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
+        fs.signin = { email: '', password: '', showPw: false };
         fs.verify = { code: '' };
         go('signin');
         return;

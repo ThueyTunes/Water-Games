@@ -40,10 +40,10 @@
 
           '<div style="display:flex;flex-direction:column;gap:11px;margin-top:24px">' +
             '<div>' +
-              '<div class="field-label">PHONE NUMBER</div>' +
-              '<div class="field field--split">' +
-                S.forms.input({ bind: 'signup.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
-                '<div style="font:400 10px/1 var(--mono);color:var(--c-50);flex:none">US +1</div>' +
+              '<div class="field-label">EMAIL ADDRESS</div>' +
+              '<div class="field">' +
+                S.forms.input({ bind: 'signup.email', type: 'email', inputmode: 'email',
+                  placeholder: 'you@example.com' }) +
               '</div>' +
             '</div>' +
             '<div style="display:flex;gap:10px">' +
@@ -73,41 +73,41 @@
           '</div>' +
         '</div>' +
         '<div style="position:relative;padding:14px 26px 34px">' +
-          '<button class="cta" data-cta="signup" data-action="request-code">TEXT ME A CODE</button>' +
+          '<button class="cta" data-cta="signup" data-action="request-code">EMAIL ME A CODE</button>' +
           (S.otp.state.error
             ? '<div class="form-error">' + S.esc(S.otp.state.error) + '</div>'
-            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR NUMBER</div>') +
+            : '<div style="text-align:center;font:400 10.5px/1.5 var(--mono);color:var(--c-35);margin-top:12px">ONE-TIME CODE TO CONFIRM YOUR EMAIL</div>') +
         '</div>' +
       '</div>';
     }
   };
 
-  /* ---- 1r · Verify phone ------------------------------------------------ */
+  /* ---- 1r · Verify email ------------------------------------------------ */
 
   S.screens.verify = {
-    id: 'verify', code: '1r', label: 'Verify phone', dark: true,
+    id: 'verify', code: '1r', label: 'Verify email', dark: true,
     render: function () {
       var boxes = S.forms.codeRow({
         bind: 'verify.code', len: 6, kind: 'digit', theme: 'navy', label: 'One-time code'
       });
 
       var st = S.otp.state;
-      var sentTo = st.phone ? S.formatPhone(st.phone) : S.formatPhone(S.formState.signup.phone);
+      var sentTo = st.email || S.formState.signup.email || 'your email';
 
       return '<div class="screen screen--navy">' +
         '<div class="jersey"></div>' +
         '<div style="position:relative;flex:1;overflow:hidden;padding:66px 26px 0;display:flex;flex-direction:column">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="signup">&lsaquo; Back</div>' +
-          '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your texts</div>' +
+          '<div style="font:700 34px/1.08 var(--serif);margin-top:38px">Check your email</div>' +
           '<div style="font:400 13px/1.55 var(--sans);color:var(--c-65);margin-top:12px">One-time code sent to ' +
-            S.esc(sentTo) + ' to confirm your number. You won’t need a code again — just your password.</div>' +
+            S.esc(sentTo) + ' to confirm your address. You won’t need a code again — just your password.</div>' +
 
-          // Local mode has no carrier to hand the code to, so it surfaces here.
+          // Local mode has no mail server, so the code surfaces here instead.
           (S.otp.isLocal() && st.code
             ? '<div class="dev-code">' +
-                '<div class="dev-code__tag">PROTOTYPE · NO SMS PROVIDER CONFIGURED</div>' +
+                '<div class="dev-code__tag">PROTOTYPE · NO MAIL PROVIDER CONFIGURED</div>' +
                 '<div class="dev-code__val">' + st.code + '</div>' +
-                '<div class="dev-code__note">A real code was generated and is shown here instead of being texted.</div>' +
+                '<div class="dev-code__note">A real code was generated and is shown here instead of being emailed.</div>' +
               '</div>'
             : '') +
 
@@ -143,8 +143,9 @@
           '<div style="font:700 38px/1.08 var(--serif);margin-top:44px">' + S.esc(g[0]) + '<br/>' + S.esc(g[1]) + '</div>' +
 
           '<div style="display:flex;flex-direction:column;gap:10px;margin-top:28px">' +
-            '<div><div class="field-label">PHONE NUMBER</div><div class="field">' +
-              S.forms.input({ bind: 'signin.phone', format: 'phone', inputmode: 'tel', placeholder: '(555) 555-0100' }) +
+            '<div><div class="field-label">EMAIL ADDRESS</div><div class="field">' +
+              S.forms.input({ bind: 'signin.email', type: 'email', inputmode: 'email',
+                placeholder: 'you@example.com' }) +
             '</div></div>' +
             '<div>' +
               '<div class="field-label">PASSWORD</div>' +

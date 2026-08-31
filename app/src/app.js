@@ -137,7 +137,7 @@
     switch (name) {
       case 'request-code':
       case 'resend-code':
-        S.otp.request(fs.signup.phone).then(function (r) {
+        S.otp.request(fs.signup.email).then(function (r) {
           if (r.ok) { fs.verify.code = ''; go('verify'); } else render();
         });
         return;
@@ -203,8 +203,8 @@
       case 'logout':
         S.otp.reset();
         S.resetSession();
-        fs.signup = { phone: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
-        fs.signin = { phone: '', password: '', showPw: false };
+        fs.signup = { email: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
+        fs.signin = { email: '', password: '', showPw: false };
         fs.verify = { code: '' };
         go('signin');
         return;
