@@ -211,7 +211,7 @@
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
           '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="fill-game-code">' +
+          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
             '<div class="team-bar" style="background:var(--navy)"></div>' +
             '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Westside Soak \'26</div>' +
               '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">REGISTRATION OPEN · 41 JOINED · $25</div></div>' +

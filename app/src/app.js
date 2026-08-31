@@ -148,12 +148,14 @@
         });
         return;
 
-      // Browsing the open game fills the code rather than skipping the step.
-      case 'fill-game-code':
-        fs.join.code = 'NVH26X';
-        render();
-        S.toast('Game code filled in for Westside Soak ’26.');
+      // No invented code here — put the cursor in the boxes and let them type
+      // the one the organiser actually gave them.
+      case 'focus-game-code': {
+        var codeInput = root.querySelector('.codes__in');
+        if (codeInput) codeInput.focus();
+        S.toast('Enter the six-character code the organiser gave you.');
         return;
+      }
 
       case 'send-message': {
         var text = fs.chat.draft.trim();

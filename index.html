@@ -1006,7 +1006,7 @@ window.S = window.S || {};
                grade: '', agree: false, showPw: false },
     verify:  { code: '' },
     signin:  { phone: '', password: '', showPw: false },
-    join:    { code: '' },
+    join:    { code: '', teamCode: '' },
     payment: { method: 'apple' },
     newteam: { name: '', color: '#F0A500' },
     filters: { participants: 'Everyone', hits: 'All approved', leaderboard: 'Players', standings: 'Teams' },
@@ -1590,7 +1590,7 @@ window.S = window.S || {};
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
           '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="fill-game-code">' +
+          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
             '<div class="team-bar" style="background:var(--navy)"></div>' +
             '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Westside Soak \'26</div>' +
               '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">REGISTRATION OPEN · 41 JOINED · $25</div></div>' +
@@ -2117,7 +2117,12 @@ window.S = window.S || {};
           : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + f + '</div>';
       }).join('');
 
-      var list = S.data.targets.map(function (t) {
+      var q = S.formState.search.tag.trim().toLowerCase();
+      var targets = S.data.targets.filter(function (t) {
+        return !q || (t.name + ' ' + (t.meta || '')).toLowerCase().indexOf(q) >= 0;
+      });
+
+      var list = targets.map(function (t) {
         if (t.blocked) {
           return '<div style="display:flex;align-items:center;gap:12px;background:var(--n-04);border:1px dashed var(--n-20);border-radius:12px;padding:12px 14px">' +
             '<div class="hatch-av" style="width:44px;height:44px;border-radius:8px;opacity:.5"></div>' +
@@ -2151,11 +2156,15 @@ window.S = window.S || {};
             '<div><div style="font:700 24px/1.1 var(--serif)">Who did you get?</div>' +
               '<div style="font:400 10.5px/1 var(--mono);color:var(--green);margin-top:6px">VIDEO UPLOADING · 62%</div></div>' +
           '</div>' +
-          '<div style="height:42px;border-radius:10px;background:#F1EEE4;border:1px solid var(--n-12);display:flex;align-items:center;padding:0 13px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Search 41 players in this game</div>' +
+          '<div class="field-line" style="background:#F1EEE4;border-color:var(--n-12)">' +
+            S.forms.input({ bind: 'search.tag', placeholder: 'Search 41 players in this game', live: true }) +
+          '</div>' +
           '<div style="display:flex;gap:7px;margin-top:12px">' + filters + '</div>' +
         '</div>' +
 
-        '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' + list + '</div>' +
+        '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' +
+          (list || '<div class="empty">No players match “' + S.esc(S.formState.search.tag) + '”.</div>') +
+        '</div>' +
 
         '<div style="padding:12px 20px 34px;background:#fff;border-top:1px solid var(--n-10)">' +
           '<button class="cta" style="height:54px" data-go="review">NEXT · REVIEW</button>' +
@@ -2341,7 +2350,9 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="height:44px;border-radius:10px;background:#fff;border:1px solid var(--n-14);display:flex;align-items:center;padding:0 14px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Enter a team code</div>' +
+          '<div class="field-line" style="height:44px">' +
+            S.forms.input({ bind: 'join.teamCode', placeholder: 'Enter a team code', maxlength: 8 }) +
+          '</div>' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">' +
             '<div class="mono-label">OPEN SLOTS</div>' +
             '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">4 OF 9 TEAMS</div>' +
@@ -2813,12 +2824,14 @@ window.S = window.S || {};
         });
         return;
 
-      // Browsing the open game fills the code rather than skipping the step.
-      case 'fill-game-code':
-        fs.join.code = 'NVH26X';
-        render();
-        S.toast('Game code filled in for Westside Soak ’26.');
+      // No invented code here — put the cursor in the boxes and let them type
+      // the one the organiser actually gave them.
+      case 'focus-game-code': {
+        var codeInput = root.querySelector('.codes__in');
+        if (codeInput) codeInput.focus();
+        S.toast('Enter the six-character code the organiser gave you.');
         return;
+      }
 
       case 'send-message': {
         var text = fs.chat.draft.trim();

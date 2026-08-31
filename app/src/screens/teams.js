@@ -25,7 +25,9 @@
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="height:44px;border-radius:10px;background:#fff;border:1px solid var(--n-14);display:flex;align-items:center;padding:0 14px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Enter a team code</div>' +
+          '<div class="field-line" style="height:44px">' +
+            S.forms.input({ bind: 'join.teamCode', placeholder: 'Enter a team code', maxlength: 8 }) +
+          '</div>' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">' +
             '<div class="mono-label">OPEN SLOTS</div>' +
             '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">4 OF 9 TEAMS</div>' +

@@ -16,7 +16,7 @@
                grade: '', agree: false, showPw: false },
     verify:  { code: '' },
     signin:  { phone: '', password: '', showPw: false },
-    join:    { code: '' },
+    join:    { code: '', teamCode: '' },
     payment: { method: 'apple' },
     newteam: { name: '', color: '#F0A500' },
     filters: { participants: 'Everyone', hits: 'All approved', leaderboard: 'Players', standings: 'Teams' },

@@ -52,7 +52,12 @@
           : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + f + '</div>';
       }).join('');
 
-      var list = S.data.targets.map(function (t) {
+      var q = S.formState.search.tag.trim().toLowerCase();
+      var targets = S.data.targets.filter(function (t) {
+        return !q || (t.name + ' ' + (t.meta || '')).toLowerCase().indexOf(q) >= 0;
+      });
+
+      var list = targets.map(function (t) {
         if (t.blocked) {
           return '<div style="display:flex;align-items:center;gap:12px;background:var(--n-04);border:1px dashed var(--n-20);border-radius:12px;padding:12px 14px">' +
             '<div class="hatch-av" style="width:44px;height:44px;border-radius:8px;opacity:.5"></div>' +
@@ -86,11 +91,15 @@
             '<div><div style="font:700 24px/1.1 var(--serif)">Who did you get?</div>' +
               '<div style="font:400 10.5px/1 var(--mono);color:var(--green);margin-top:6px">VIDEO UPLOADING · 62%</div></div>' +
           '</div>' +
-          '<div style="height:42px;border-radius:10px;background:#F1EEE4;border:1px solid var(--n-12);display:flex;align-items:center;padding:0 13px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Search 41 players in this game</div>' +
+          '<div class="field-line" style="background:#F1EEE4;border-color:var(--n-12)">' +
+            S.forms.input({ bind: 'search.tag', placeholder: 'Search 41 players in this game', live: true }) +
+          '</div>' +
           '<div style="display:flex;gap:7px;margin-top:12px">' + filters + '</div>' +
         '</div>' +
 
-        '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' + list + '</div>' +
+        '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' +
+          (list || '<div class="empty">No players match “' + S.esc(S.formState.search.tag) + '”.</div>') +
+        '</div>' +
 
         '<div style="padding:12px 20px 34px;background:#fff;border-top:1px solid var(--n-10)">' +
           '<button class="cta" style="height:54px" data-go="review">NEXT · REVIEW</button>' +
