@@ -9,25 +9,31 @@
   S.screens.home = {
     id: 'home', code: '1a', label: 'Home',
     render: function () {
+      var ses = S.session;
+      var inGame = !!ses.game;
+
       var quick = [
         { title: 'Record a hit', note: 'CAMERA', gold: true, go: 'camera' },
         { title: 'My hits', note: 'STATUS', go: 'status' },
-        { title: 'Rules', note: 'PHASE 3' },
-        { title: 'My team', note: 'RIPTIDE', go: 'team' }
+        { title: 'Rules', note: inGame ? 'GAME RULES' : '—', act: 'rules' },
+        { title: 'My team', note: ses.team ? ses.team.name.toUpperCase() : 'NONE',
+          go: ses.team ? 'team' : 'teams' }
       ].map(function (q) {
         return '<div style="flex:1;padding:10px 9px;border-radius:11px;background:' +
             (q.gold ? 'var(--gold)' : '#fff') + ';border:1px solid ' + (q.gold ? 'var(--gold)' : 'var(--n-14)') +
             ';display:flex;flex-direction:column;gap:5px;align-items:flex-start"' +
-            (q.go ? ' data-go="' + q.go + '"' : '') + '>' +
+            (q.go ? ' data-go="' + q.go + '"' : (q.act ? ' data-action="' + q.act + '"' : '')) + '>' +
           '<div style="font:600 11.5px/1.2 var(--sans);color:var(--navy)">' + q.title + '</div>' +
           '<div style="font:400 8.5px/1.2 var(--mono);letter-spacing:.04em;color:var(--navy);opacity:.6">' + q.note + '</div>' +
         '</div>';
       }).join('');
 
-      var rows = S.data.teams.map(function (t, i) {
+      // Standings preview — empty until the game reports any.
+      var rows = ses.topTeams.map(function (t, i) {
+        var mine = ses.team && t.name === ses.team.name;
         return '<div style="display:flex;align-items:center;gap:11px;padding:9px 13px;' +
-            (t.mine ? 'background:rgba(18,166,107,.1);' : '') + 'border-bottom:1px solid var(--n-07)"' +
-            (t.mine ? ' data-go="team"' : '') + '>' +
+            (mine ? 'background:rgba(18,166,107,.1);' : '') + 'border-bottom:1px solid var(--n-07)"' +
+            (mine ? ' data-go="team"' : '') + '>' +
           '<div style="font:700 14px/1 var(--serif);width:14px;color:var(--n-55)">' + (i + 1) + '</div>' +
           '<div style="width:3px;height:20px;border-radius:2px;background:' + t.color + '"></div>' +
           '<div style="flex:1;font:600 13px/1 var(--sans)">' + t.name + '</div>' +
@@ -40,7 +46,8 @@
         '<div style="background:linear-gradient(120deg,var(--navy) 0%,var(--navy-bright) 100%);color:var(--cream);padding:58px 20px 16px;display:flex;align-items:flex-end;justify-content:space-between">' +
           '<div>' +
             '<div style="font:700 24px/1 var(--serif);letter-spacing:.02em">SOAKED <span style="font-weight:400;color:var(--c-65)">— Home</span></div>' +
-            '<div style="font:400 10px/1 var(--mono);letter-spacing:.12em;color:var(--c-70);margin-top:6px">WESTSIDE SOAK · PHASE 3 · 41 IN</div>' +
+            '<div style="font:400 10px/1 var(--mono);letter-spacing:.12em;color:var(--c-70);margin-top:6px">' +
+              (inGame ? 'GAME ' + S.esc(ses.game.code) : 'NO GAME JOINED') + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:12px">' +
             '<div class="hatch-navy" style="width:34px;height:34px;border-radius:50%" data-go="profile"></div>' +
@@ -55,35 +62,52 @@
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px">' +
           '<div style="display:flex;gap:8px">' + quick + '</div>' +
 
-          '<div style="border-radius:14px;overflow:hidden;background:#fff;border:1px solid var(--n-10)">' +
-            '<div class="hatch-vid" style="height:142px;position:relative">' +
-              '<div style="position:absolute;top:11px;left:11px;padding:5px 9px;border-radius:5px;background:var(--red);color:var(--cream);font:600 9px/1 var(--mono);letter-spacing:.1em">HIT OF THE DAY</div>' +
-              '<div class="play-dot" style="width:54px;height:54px"></div>' +
-              '<div style="position:absolute;left:11px;bottom:11px;font:400 10px/1 var(--mono);color:var(--n-70)">0:11</div>' +
-            '</div>' +
-            '<div style="padding:12px 14px">' +
-              '<div style="font:600 14px/1.35 var(--sans)">Maya Okonkwo catches Ty Brennan in the Safeway lot</div>' +
-              '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:7px">128 VIEWS · APPROVED 14 MIN AGO</div>' +
-            '</div>' +
-          '</div>' +
+          // Hit of the day — nothing to show until a clip is approved.
+          (ses.featured
+            ? '<div style="border-radius:14px;overflow:hidden;background:#fff;border:1px solid var(--n-10)" data-go="status">' +
+                '<div class="hatch-vid" style="height:142px;position:relative">' +
+                  '<div style="position:absolute;top:11px;left:11px;padding:5px 9px;border-radius:5px;background:var(--red);color:var(--cream);font:600 9px/1 var(--mono);letter-spacing:.1em">HIT OF THE DAY</div>' +
+                  '<div class="play-dot" style="width:54px;height:54px"></div>' +
+                  '<div style="position:absolute;left:11px;bottom:11px;font:400 10px/1 var(--mono);color:var(--n-70)">' + S.esc(ses.featured.time) + '</div>' +
+                '</div>' +
+                '<div style="padding:12px 14px">' +
+                  '<div style="font:600 14px/1.35 var(--sans)">' + S.esc(ses.featured.caption) + '</div>' +
+                  '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:7px">' + S.esc(ses.featured.meta) + '</div>' +
+                '</div>' +
+              '</div>'
+            : '<div style="border-radius:14px;background:#fff;border:1px dashed var(--n-20);padding:26px 18px;text-align:center">' +
+                '<div style="font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--n-45)">HIT OF THE DAY</div>' +
+                '<div style="font:400 13px/1.5 var(--sans);color:var(--n-55);margin-top:10px">' +
+                  (inGame ? 'No approved clips yet. The first one lands here.'
+                          : 'Join a game to see hits from your players.') + '</div>' +
+              '</div>') +
 
           '<div style="display:flex;align-items:baseline;justify-content:space-between">' +
             '<div style="font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--n-55)">TOP TEAMS</div>' +
-            '<div style="font:500 11px/1 var(--sans);color:var(--red)" data-go="standings">Full board</div>' +
+            (rows ? '<div style="font:500 11px/1 var(--sans);color:var(--red)" data-go="standings">Full board</div>' : '') +
           '</div>' +
 
-          '<div class="card">' + rows +
-            '<div style="display:flex;align-items:center;gap:9px;padding:9px 13px;background:rgba(255,181,36,.16);border-top:1px solid var(--n-07)" data-go="profile">' +
-              S.avatar(22) +
-              '<div style="font:400 9px/1 var(--mono);letter-spacing:.1em;color:var(--gold-ink)">MOST ELIMS</div>' +
-              '<div style="flex:1;font:600 12px/1 var(--sans)">Maya Okonkwo</div>' +
-              '<div style="font:700 15px/1 var(--serif)">5</div>' +
-            '</div>' +
+          '<div class="card">' +
+            (rows ||
+              '<div class="empty">' +
+                (inGame ? 'No teams have registered hits yet.'
+                        : 'Standings appear once you’ve joined a game.') +
+              '</div>') +
+            (ses.topPlayer
+              ? '<div style="display:flex;align-items:center;gap:9px;padding:9px 13px;background:rgba(255,181,36,.16);border-top:1px solid var(--n-07)" data-go="profile">' +
+                  S.avatar(22) +
+                  '<div style="font:400 9px/1 var(--mono);letter-spacing:.1em;color:var(--gold-ink)">MOST ELIMS</div>' +
+                  '<div style="flex:1;font:600 12px/1 var(--sans)">' + S.esc(ses.topPlayer.name) + '</div>' +
+                  '<div style="font:700 15px/1 var(--serif)">' + ses.topPlayer.elims + '</div>' +
+                '</div>'
+              : '') +
           '</div>' +
         '</div>' +
 
         '<div style="padding:12px 20px 0">' +
-          '<button class="cta" style="height:54px" data-go="camera">RECORD A HIT</button>' +
+          (inGame
+            ? '<button class="cta" style="height:54px" data-go="camera">RECORD A HIT</button>'
+            : '<button class="cta" style="height:54px" data-go="join">JOIN A GAME</button>') +
         '</div>' +
         S.tabBar('home') +
       '</div>';
@@ -113,8 +137,14 @@
         '<div style="padding:56px 20px 18px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream);display:flex;align-items:center;gap:13px">' +
           '<div class="hatch-navy" style="width:46px;height:46px;border-radius:50%"></div>' +
           '<div style="flex:1">' +
-            '<div style="font:700 20px/1.1 var(--serif)">Maya Okonkwo</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--c-70);margin-top:7px">RIPTIDE · CAPTAIN · 5 ELIMS</div>' +
+            // Whoever actually signed up, not a fixture name.
+            '<div style="font:700 20px/1.1 var(--serif)">' +
+              (S.esc((S.formState.signup.first + ' ' + S.formState.signup.last).trim()) || 'Your account') +
+            '</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--c-70);margin-top:7px">' +
+              (S.session.team ? S.esc(S.session.team.name.toUpperCase()) : 'NO TEAM') +
+              (S.session.game ? ' · GAME ' + S.esc(S.session.game.code) : ' · NO GAME') +
+            '</div>' +
           '</div>' +
           '<div style="font:400 22px/1;color:var(--c-70)" data-go="home">×</div>' +
         '</div>' +

@@ -25,6 +25,26 @@
     camera:  { lens: 'REAR' }
   };
 
+  /* ---- session ----------------------------------------------------------- */
+  // What THIS user has actually done. Empty until they join a game and a team,
+  // which is what keeps the home screen free of invented names and teams.
+
+  S.session = {
+    game: null,     // { code } once the entry fee is paid
+    team: null,     // { name, color } once they join or create one
+    featured: null, // hit of the day — nothing until a clip is approved
+    topTeams: [],   // standings preview
+    topPlayer: null
+  };
+
+  S.resetSession = function () {
+    S.session.game = null;
+    S.session.team = null;
+    S.session.featured = null;
+    S.session.topTeams = [];
+    S.session.topPlayer = null;
+  };
+
   function get(path) {
     var p = path.split('.');
     return S.formState[p[0]] ? S.formState[p[0]][p[1]] : '';

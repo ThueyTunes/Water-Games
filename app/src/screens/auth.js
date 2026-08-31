@@ -298,7 +298,7 @@
         '</div>' +
 
         '<div style="padding:12px 24px 34px">' +
-          '<button class="cta" data-go="teams">PAY $25 &amp; JOIN</button>' +
+          '<button class="cta" data-action="pay-entry">PAY $25 &amp; JOIN</button>' +
         '</div>' +
       '</div>';
     }

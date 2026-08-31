@@ -179,8 +179,27 @@
         setTimeout(function () { go('home'); }, 900);
         return;
 
+      // Progressing through the join flow is what populates the home screen.
+      case 'pay-entry':
+        S.session.game = { code: fs.join.code || '——————' };
+        go('teams');
+        S.toast('Entry paid. Pick a team next.');
+        return;
+
+      case 'join-team':
+        S.session.team = { name: 'Tide', color: '#1F79F5' };
+        go('team');
+        return;
+
+      case 'create-team':
+        S.session.team = { name: fs.newteam.name.trim(), color: fs.newteam.color };
+        go('team');
+        S.toast(S.session.team.name + ' created. You’re captain.');
+        return;
+
       case 'logout':
         S.otp.reset();
+        S.resetSession();
         fs.signup = { phone: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
         fs.signin = { phone: '', password: '', showPw: false };
         fs.verify = { code: '' };

@@ -50,7 +50,7 @@
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;gap:10px">' +
-          '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-go="team">ASK TO JOIN TIDE</button>' +
+          '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-action="join-team">ASK TO JOIN TIDE</button>' +
           '<div style="flex:1;height:54px;border-radius:12px;border:1px solid var(--n-25);display:flex;align-items:center;justify-content:center;font:600 12.5px/1 var(--sans)" data-go="newteam">Create · $5</div>' +
         '</div>' +
         S.tabBar('chat') +
@@ -143,7 +143,7 @@
         '</div>' +
 
         '<div style="padding:12px 22px 12px">' +
-          '<button class="cta" data-cta="newteam" data-muted="ink" data-go="team">PAY $5 &amp; CREATE TEAM</button>' +
+          '<button class="cta" data-cta="newteam" data-muted="ink" data-action="create-team">PAY $5 &amp; CREATE TEAM</button>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';
