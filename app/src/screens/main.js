@@ -151,19 +151,21 @@
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           group('TEAM', [
-            { title: 'My team', note: 'RIPTIDE · 3 ALIVE', go: 'team' },
-            { title: 'Join a team', note: '4 TEAMS HAVE OPEN SLOTS', go: 'teams' },
+            { title: 'My team', note: S.session.team ? S.session.team.name.toUpperCase() : 'NONE YET', go: 'team' },
+            { title: 'Join a team',
+              note: S.data.openTeams.length ? S.data.openTeams.length + ' HAVE OPEN SLOTS' : 'NO TEAMS YET',
+              go: 'teams' },
             { title: 'Create a team', note: '$5 · YOU BECOME CAPTAIN', go: 'newteam' }
           ]) +
           group('GAME', [
-            { title: "Rules", note: "PHASE 3 · QUOTA 3", act: "rules" },
-            { title: 'Join another game', note: 'ENTER A GAME CODE', go: 'join' },
-            { title: "Payments &amp; receipts", note: " ENTRY ·  TEAM", act: "receipts" }
+            { title: 'Rules', note: S.session.game ? 'GAME RULES' : 'JOIN A GAME FIRST', act: 'rules' },
+            { title: S.session.game ? 'Join another game' : 'Join a game', note: 'ENTER A GAME CODE', go: 'join' },
+            { title: 'Payments &amp; receipts', note: S.session.game ? 'ENTRY PAID' : 'NOTHING YET', act: 'receipts' }
           ]) +
           group('ACCOUNT', [
             { title: 'Profile &amp; photo', go: 'profile' },
-            { title: "Notifications", note: "4 UNREAD", act: "notifications" },
-            { title: "Report a player or clip", act: "report" }
+            { title: 'Notifications', note: 'NONE', act: 'notifications' },
+            { title: 'Report a player or clip', act: 'report' }
           ]) +
           '<div style="flex:none;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:#fff;border:1px solid rgba(232,51,42,.45);font:600 13px/1 var(--sans);color:var(--red);margin-top:2px" data-action="logout">Log out</div>' +
         '</div>' +
@@ -193,9 +195,9 @@
         return S.forms.pick('filters.hits', c, c, 'pick--chip');
       }).join('');
 
-      // "My team" is Riptide; "Phase 3" is the current phase only.
+      // "My team" is whichever team the player is on.
       var shown = S.data.hits.filter(function (h) {
-        if (mode === 'My team') return h.team === 'Riptide';
+        if (mode === 'My team') return S.session.team && h.team === S.session.team.name;
         if (mode === 'Phase 3') return h.phase === 3;
         return true;
       });
@@ -218,15 +220,21 @@
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>' +
-          (shown.length ? '' : '<div class="empty">No approved clips in this filter yet.</div>') +
+          (shown.length
+            ? '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>'
+            : '<div class="card"><div class="empty">' +
+                (S.data.hits.length ? 'No clips match this filter.'
+                                    : 'No approved clips yet. Land a hit and it shows up here.') +
+              '</div></div>') +
 
-          '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="share">' +
-            '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
-            '<div style="flex:1"><div style="font:500 12px/1.35 var(--sans)">Your clip is live — 128 views</div>' +
-              '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:5px">TAP TO SHARE OUTSIDE THE APP</div></div>' +
-            '<div style="font:400 16px/1;color:var(--n-30)">›</div>' +
-          '</div>' +
+          (S.session.clips.length
+            ? '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="share">' +
+                '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
+                '<div style="flex:1"><div style="font:500 12px/1.35 var(--sans)">Your clip is live</div>' +
+                  '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:5px">TAP TO SHARE OUTSIDE THE APP</div></div>' +
+                '<div style="font:400 16px/1;color:var(--n-30)">›</div>' +
+              '</div>'
+            : '') +
         '</div>' +
         S.tabBar('hits') +
       '</div>';
@@ -252,34 +260,40 @@
         '</div>';
       }
 
-      var faces = [0, 1, 2].map(function (i) {
+      var team = S.session.team;
+      var sent = S.formState.chat.sent;
+
+      var faces = S.data.roster.slice(0, 3).map(function (m, i) {
         return '<div class="hatch-av" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);' +
           (i ? 'margin-left:-9px' : '') + '"></div>';
       }).join('');
 
+      var head = team ? team.name : 'Team chat';
+      var sub = team
+        ? (S.data.roster.length ? S.data.roster.length + ' ON THE ROSTER' : 'JUST YOU SO FAR')
+        : 'NO TEAM YET';
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 14px;background:linear-gradient(120deg,var(--green-deep),var(--green-light));color:var(--cream);display:flex;align-items:center;gap:12px">' +
-          '<div><div style="font:700 24px/1.1 var(--serif)">Riptide</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--c-80);margin-top:7px">3 ALIVE · 2 OF 3 THIS PHASE</div></div>' +
+          '<div><div style="font:700 24px/1.1 var(--serif)">' + S.esc(head) + '</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--c-80);margin-top:7px">' + sub + '</div></div>' +
           '<div style="flex:1"></div>' +
-          '<div style="display:flex" data-go="team">' + faces + '</div>' +
+          (faces ? '<div style="display:flex" data-go="team">' + faces + '</div>' : '') +
         '</div>' +
 
         '<div style="flex:1;overflow:auto;padding:16px 18px 0;display:flex;flex-direction:column;gap:11px" data-chat-scroll>' +
-          '<div style="text-align:center;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-40)">TODAY</div>' +
-          theirs('MAYA · CAPTAIN', 'Ty walks to the Safeway at 4:45 every day. I\'ve got him. Somebody take Priya.') +
-          theirs('DESHAWN', 'On it. She\'s at practice till 6.') +
-          mine('One more and we clear the phase. Don\'t get caught in a car.') +
-          S.formState.chat.sent.map(function (m) { return mine(S.esc(m)); }).join('') +
-          '<div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:12px;background:rgba(232,51,42,.1);border:1px solid rgba(232,51,42,.35)">' +
-            '<div style="width:13px;height:13px;border-radius:3px;background:var(--red);flex:none"></div>' +
-            '<div style="font:400 11.5px/1.45 var(--sans);color:var(--red-ink)">Ana was eliminated 1 hr ago — she can still read the chat but can\'t post.</div>' +
-          '</div>' +
+          (team
+            ? (sent.length
+                ? '<div style="text-align:center;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-40)">TODAY</div>' +
+                  sent.map(function (m) { return mine(S.esc(m)); }).join('')
+                : '<div class="empty">No messages yet. Say something to your team.</div>')
+            : '<div class="empty">Join or create a team to get a team chat.</div>') +
         '</div>' +
 
         '<div style="padding:10px 18px 0;display:flex;gap:9px;align-items:center">' +
           '<div style="flex:1;height:46px;border-radius:23px;background:#fff;border:1px solid rgba(22,37,107,.15);display:flex;align-items:center;padding:0 16px">' +
-            S.forms.input({ bind: 'chat.draft', placeholder: 'Message Riptide', cls: 'inp--chat', enter: 'send-message' }) +
+            S.forms.input({ bind: 'chat.draft', cls: 'inp--chat', enter: 'send-message',
+              placeholder: team ? 'Message ' + team.name : 'Join a team first' }) +
           '</div>' +
           '<div style="width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font:700 17px/1 var(--sans);color:var(--navy);flex:none" data-action="send-message">↑</div>' +
         '</div>' +
@@ -348,8 +362,11 @@
         '</div>' +
         '<div style="flex:1;overflow:hidden;padding:13px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px">' + colHead + '</div>' +
-          '<div class="card">' + rows + '</div>' +
-          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' +
+          '<div class="card">' + (rows ||
+            '<div class="empty">' + (mode === 'Teams'
+              ? 'No teams have registered hits yet.'
+              : 'Nobody has landed a hit yet.') + '</div>') + '</div>' +
+          (rows ? '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' : '') +
         '</div>' +
         S.tabBar('leaderboard') +
       '</div>';
@@ -392,7 +409,11 @@
         '<div class="hdr">' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between">' +
             '<div class="hdr__title">Participants</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--c-70)">41 IN · 19 OUT</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--c-70)">' +
+              (S.data.participants.length
+                ? S.data.participants.filter(function (p) { return !p.out; }).length + ' IN · ' +
+                  S.data.participants.filter(function (p) { return p.out; }).length + ' OUT'
+                : 'NOBODY YET') + '</div>' +
           '</div>' +
           '<div class="hdr__chips">' + chips + '</div>' +
         '</div>' +
@@ -401,7 +422,9 @@
             S.forms.input({ bind: 'search.participants', placeholder: 'Search players', live: true }) +
           '</div>' +
           '<div class="card">' + (rows ||
-            '<div class="empty">No players match “' + S.esc(S.formState.search.participants) + '”.</div>') + '</div>' +
+            '<div class="empty">' + (S.data.participants.length
+              ? 'No players match “' + S.esc(S.formState.search.participants) + '”.'
+              : 'No players in this game yet.') + '</div>') + '</div>' +
         '</div>' +
         S.tabBar('participants') +
       '</div>';

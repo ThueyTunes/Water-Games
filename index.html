@@ -754,103 +754,67 @@ body {
 <div id="shell-bar"></div>
 <div id="root"></div>
 <script>
-/* Fixture data, transcribed from the mockups.
-   Fictional brand, player-run game, no school affiliation — every name, team
-   and roster here is placeholder, exactly as the design brief states. */
+/* Game data.
+ *
+ * These arrays are EMPTY on purpose. Every screen renders an empty state when
+ * its list has nothing in it, so the app ships with no invented players, teams
+ * or clips. The shapes below are the contract — drop real records in (or point
+ * these at an API response) and every screen fills in with no other changes.
+ */
 
 window.S = window.S || {};
 window.S.screens = window.S.screens || {};
 
 window.S.data = {
-  game: {
-    name: "Westside Soak '26",
-    phase: 3,
-    quota: 3,
-    playersIn: 41,
-    playersOut: 19,
-    entryFee: 25,
-    pot: 820
-  },
+  // Set once the player joins a game. { code, phase, quota, playersIn, playersOut,
+  // entryFee, pot, teamFee }
+  game: null,
 
-  colors: {
-    Undertow: '#E8332A',
-    Riptide: '#12A66B',
-    Kraken: '#7C3AED',
-    Tide: '#1F79F5',
-    Sandbar: '#F0A500'
-  },
+  // Games open for registration on the Join screen.
+  // { name, code, status, joined, fee }
+  openGames: [],
 
-  // Home · top teams, and the source for Standings
-  teams: [
-    { name: 'Undertow', color: '#E8332A', alive: 5, hits: 14, phase: '3/3 THIS PHASE' },
-    { name: 'Riptide',  color: '#12A66B', alive: 3, hits: 12, phase: '2/3 THIS PHASE', mine: true },
-    { name: 'Kraken',   color: '#7C3AED', alive: 3, hits: 9,  phase: '2/3 THIS PHASE' },
-    { name: 'Tide',     color: '#1F79F5', alive: 2, hits: 7,  phase: '0/3 — AT RISK' },
-    { name: 'Sandbar',  color: '#F0A500', alive: 2, hits: 3,  phase: '1/3 THIS PHASE' }
+  // Teams in the current game.
+  // { name, color, alive, roster, hits, phaseHits, phase, mine }
+  teams: [],
+
+  // Players ranked for the leaderboard.
+  // { name, color, team, meta, elims, phase3, days, out, mine }
+  leaders: [],
+
+  // Everyone in the game, for the Participants tab.
+  // { name, color, meta, out }
+  participants: [],
+
+  // Approved clips behind the Hits grid.
+  // { actor, target, place, team, phase, time, h }
+  hits: [],
+
+  // Teams with open slots on the Pick-your-team screen.
+  // { name, color, meta, filled, roster, captain }
+  openTeams: [],
+
+  // Roster of the player's own team, for the Team screen.
+  // { name, meta, captain, out, mine }
+  roster: [],
+
+  // Who the player may tag, for step 2 of the capture flow.
+  // { name, color, meta, blocked }
+  targets: [],
+
+  // Team colors. Any color already claimed in the game goes in `taken`.
+  palette: [
+    { c: '#12A66B', name: 'Green' },
+    { c: '#E8332A', name: 'Red' },
+    { c: '#7C3AED', name: 'Purple' },
+    { c: '#1F79F5', name: 'Blue' },
+    { c: '#F0A500', name: 'Amber' },
+    { c: '#16256B', name: 'Navy' }
   ],
+  taken: [],
 
-  // Leaderboard · players.
-  // `phase3` are this-phase eliminations only; they sum to each team's
-  // "n/3 THIS PHASE" count in the standings (8 across the game).
-  leaders: [
-    { name: 'Maya Okonkwo',   color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE · CAPTAIN', elims: 5, phase3: 1, days: 12 },
-    { name: 'Priya Raman',    color: '#7C3AED', team: 'Kraken',   meta: 'KRAKEN',            elims: 4, phase3: 2, days: 12 },
-    { name: 'Deshawn Pierce', color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 4, phase3: 1, days: 12 },
-    { name: 'Jonah Fields',   color: '#1F79F5', team: 'Tide',     meta: 'TIDE',              elims: 3, phase3: 0, days: 12 },
-    { name: 'Eli Marchetti',  color: '#F0A500', team: 'Sandbar',  meta: 'SANDBAR',           elims: 3, phase3: 1, days: 12 },
-    { name: 'Ty Brennan',     color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 3, phase3: 1, days: 9, out: true },
-    { name: 'You',            color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 3, phase3: 0, days: 12, mine: true },
-    { name: 'Sofia Alvarez',  color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 2, phase3: 2, days: 12 }
-  ],
-
-  // Approved clips behind the Hits grid. The first four are the ones drawn in
-  // the mockup; the rest extend the set so the filters have something to cut.
-  hits: [
-    { actor: 'Maya',    target: 'Ty',      place: 'parking lot ambush', team: 'Riptide',  phase: 3, time: '0:11', h: 150 },
-    { actor: 'Eli',     target: 'Priya',   place: 'bike rack',          team: 'Sandbar',  phase: 3, time: '0:07', h: 110 },
-    { actor: 'Deshawn', target: 'Ana',     place: 'front porch',        team: 'Riptide',  phase: 3, time: '0:22', h: 110 },
-    { actor: 'Jonah',   target: 'Chris',   place: 'bus stop',           team: 'Tide',     phase: 2, time: '0:09', h: 150 },
-    { actor: 'Priya',   target: 'Jonah',   place: 'driveway',           team: 'Kraken',   phase: 3, time: '0:12', h: 120 },
-    { actor: 'Sofia',   target: 'Eli',     place: 'gym doors',          team: 'Undertow', phase: 2, time: '0:15', h: 130 },
-    { actor: 'Maya',    target: 'Jonah',   place: 'track lot',          team: 'Riptide',  phase: 2, time: '0:08', h: 125 },
-    { actor: 'Ty',      target: 'Sofia',   place: 'corner store',       team: 'Undertow', phase: 1, time: '0:18', h: 140 }
-  ],
-
-  // Participants · everyone, alive first
-  participants: [
-    { name: 'Maya Okonkwo',   color: '#12A66B', meta: 'RIPTIDE · 5 ELIMS · 12 DAYS IN' },
-    { name: 'Priya Raman',    color: '#7C3AED', meta: 'KRAKEN · 4 ELIMS · 12 DAYS IN' },
-    { name: 'Deshawn Pierce', color: '#12A66B', meta: 'RIPTIDE · 4 ELIMS · 12 DAYS IN' },
-    { name: 'Jonah Fields',   color: '#1F79F5', meta: 'TIDE · 3 ELIMS · 12 DAYS IN' },
-    { name: 'Ty Brennan',     color: '#E8332A', meta: 'UNDERTOW · 3 ELIMS · OUT PHASE 3', out: true },
-    { name: 'Ana Ruiz',       color: '#12A66B', meta: 'RIPTIDE · 1 ELIM · OUT PHASE 3',   out: true },
-    { name: 'Chris Vaughn',   color: '#12A66B', meta: 'RIPTIDE · 0 ELIMS · OUT PHASE 2',  out: true }
-  ],
-
-  // Teams with open slots (Pick your team)
-  openTeams: [
-    { name: 'Tide',    color: '#1F79F5', meta: '3 OF 5 FILLED · 7 HITS · CAPTAIN JONAH F.', pick: true },
-    { name: 'Kraken',  color: '#7C3AED', meta: '4 OF 5 FILLED · 9 HITS · CAPTAIN PRIYA R.' },
-    { name: 'Sandbar', color: '#F0A500', meta: '2 OF 5 FILLED · 3 HITS · CAPTAIN ELI M.' }
-  ],
-
-  // Riptide roster (Team detail)
-  roster: [
-    { name: 'Maya Okonkwo',   meta: '5 HITS · ALIVE', captain: true },
-    { name: 'You',            meta: '3 HITS · ALIVE', dot: true },
-    { name: 'Deshawn Pierce', meta: '4 HITS · ALIVE', dot: true },
-    { name: 'Ana Ruiz',       meta: 'OUT · SOAKED BY DESHAWN P.', out: true },
-    { name: 'Chris Vaughn',   meta: 'OUT · PHASE 2', out: true }
-  ],
-
-  // Tag step · who you can and can't pick
-  targets: [
-    { name: 'Ty Brennan',   color: '#E8332A', meta: 'UNDERTOW · ALIVE', picked: true },
-    { name: 'Priya Raman',  color: '#7C3AED', meta: 'KRAKEN · ALIVE' },
-    { name: 'Jonah Fields', color: '#1F79F5', meta: 'TIDE · ALIVE' },
-    { name: 'Maya Okonkwo', blocked: 'Your own team — not a valid target this phase' },
-    { name: 'Ana Ruiz',     blocked: 'Immune for 3h 12m after being hit' }
-  ]
+  // Saved payment methods. { key, name, note }
+  paymentMethods: []
 };
 /* Shared primitives: the iOS device frame (ported from `ios-frame.jsx`) and the
    handful of fragments the mockups repeat on nearly every screen. */
@@ -1020,11 +984,29 @@ window.S = window.S || {};
   // which is what keeps the home screen free of invented names and teams.
 
   S.session = {
-    game: null,     // { code } once the entry fee is paid
-    team: null,     // { name, color } once they join or create one
-    featured: null, // hit of the day — nothing until a clip is approved
-    topTeams: [],   // standings preview
-    topPlayer: null
+    game: null,      // { code } once the entry fee is paid
+    team: null,      // { name, color } once they join or create one
+    featured: null,  // hit of the day — nothing until a clip is approved
+    topTeams: [],    // standings preview
+    topPlayer: null,
+    tagged: null,    // who they picked in step 2 of the capture flow
+    pending: null,   // a submission of theirs awaiting review
+    incoming: null,  // someone else's claim against them
+    clips: []        // their own approved clips
+  };
+
+  // The signed-in player, built from what they entered at sign up.
+  S.me = function () {
+    var s = S.formState.signup;
+    var name = (s.first + ' ' + s.last).trim();
+    return {
+      name: name,
+      hasName: name !== '',
+      grade: s.grade,
+      team: S.session.team,
+      elims: 0,
+      soaked: 0
+    };
   };
 
   S.resetSession = function () {
@@ -1033,6 +1015,10 @@ window.S = window.S || {};
     S.session.featured = null;
     S.session.topTeams = [];
     S.session.topPlayer = null;
+    S.session.tagged = null;
+    S.session.pending = null;
+    S.session.incoming = null;
+    S.session.clips = [];
   };
 
   function get(path) {
@@ -1610,12 +1596,16 @@ window.S = window.S || {};
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
           '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
-            '<div class="team-bar" style="background:var(--navy)"></div>' +
-            '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Westside Soak \'26</div>' +
-              '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">REGISTRATION OPEN · 41 JOINED · $25</div></div>' +
-            '<div style="padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.2);font:600 10px/1 var(--mono);color:var(--gold-ink)">JOIN</div>' +
-          '</div>' +
+          (S.data.openGames.length
+            ? S.data.openGames.map(function (g) {
+                return '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
+                  '<div class="team-bar" style="background:var(--navy)"></div>' +
+                  '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">' + S.esc(g.name) + '</div>' +
+                    '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + S.esc(g.status) + '</div></div>' +
+                  '<div style="padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.2);font:600 10px/1 var(--mono);color:var(--gold-ink)">JOIN</div>' +
+                '</div>';
+              }).join('')
+            : '<div class="card"><div class="empty">No public games right now. You’ll need a code from whoever runs yours.</div></div>') +
         '</div>' +
 
         '<div style="padding:12px 24px 12px">' +
@@ -1654,7 +1644,9 @@ window.S = window.S || {};
 
         '<div style="flex:1;overflow:hidden;padding:0 24px;display:flex;flex-direction:column;gap:16px">' +
           '<div style="font:700 32px/1.1 var(--serif);margin-top:10px">Pay in to play</div>' +
-          '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60)">Westside Soak \'26 · one-time entry, non-refundable once the phase opens.</div>' +
+          '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60)">Game ' +
+            S.esc(S.formState.join.code || '——————') +
+            ' · one-time entry, non-refundable once the phase opens.</div>' +
 
           '<div style="flex:none;background:#fff;border:1px solid var(--n-12);border-radius:14px;overflow:hidden">' +
             '<div style="display:flex;align-items:flex-end;justify-content:space-between;padding:18px 18px 16px">' +
@@ -1667,7 +1659,7 @@ window.S = window.S || {};
             '<div style="padding:14px 18px;border-top:1px solid var(--n-07);display:flex;flex-direction:column;gap:11px">' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
                 '<div style="display:flex;align-items:center;gap:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 12.5px/1 var(--sans)">To the Westside prize pot</div></div>' +
+                '<div style="font:400 12.5px/1 var(--sans)">To the game prize pot</div></div>' +
                 '<div style="font:600 12.5px/1 var(--sans)">$20.00</div>' +
               '</div>' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -1684,8 +1676,8 @@ window.S = window.S || {};
           '<div class="mono-label">PAY WITH</div>' +
           '<div style="display:flex;flex-direction:column;gap:7px">' +
             method({ key: 'apple', name: 'Apple Pay', note: 'FASTEST · FACE ID' }) +
-            method({ key: 'card', name: 'Card · Visa ···· 4417', note: 'SAVED' }) +
-            method({ key: 'venmo', name: 'Venmo', note: '@MAYA-OKONKWO' }) +
+            method({ key: 'card', name: 'Card', note: 'ADD A CARD' }) +
+            method({ key: 'venmo', name: 'Venmo', note: 'CONNECT ACCOUNT' }) +
             '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:1px dashed rgba(22,37,107,.22)" data-action="add-payment">' +
               '<div style="width:36px;height:25px;border-radius:5px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 15px/1 var(--sans);color:var(--n-45)">+</div>' +
               '<div style="flex:1"><div style="font:600 13px/1.2 var(--sans);color:var(--n-70)">Google Pay, PayPal, Cash App, new card</div></div>' +
@@ -1856,19 +1848,21 @@ window.S = window.S || {};
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           group('TEAM', [
-            { title: 'My team', note: 'RIPTIDE · 3 ALIVE', go: 'team' },
-            { title: 'Join a team', note: '4 TEAMS HAVE OPEN SLOTS', go: 'teams' },
+            { title: 'My team', note: S.session.team ? S.session.team.name.toUpperCase() : 'NONE YET', go: 'team' },
+            { title: 'Join a team',
+              note: S.data.openTeams.length ? S.data.openTeams.length + ' HAVE OPEN SLOTS' : 'NO TEAMS YET',
+              go: 'teams' },
             { title: 'Create a team', note: '$5 · YOU BECOME CAPTAIN', go: 'newteam' }
           ]) +
           group('GAME', [
-            { title: "Rules", note: "PHASE 3 · QUOTA 3", act: "rules" },
-            { title: 'Join another game', note: 'ENTER A GAME CODE', go: 'join' },
-            { title: "Payments &amp; receipts", note: " ENTRY ·  TEAM", act: "receipts" }
+            { title: 'Rules', note: S.session.game ? 'GAME RULES' : 'JOIN A GAME FIRST', act: 'rules' },
+            { title: S.session.game ? 'Join another game' : 'Join a game', note: 'ENTER A GAME CODE', go: 'join' },
+            { title: 'Payments &amp; receipts', note: S.session.game ? 'ENTRY PAID' : 'NOTHING YET', act: 'receipts' }
           ]) +
           group('ACCOUNT', [
             { title: 'Profile &amp; photo', go: 'profile' },
-            { title: "Notifications", note: "4 UNREAD", act: "notifications" },
-            { title: "Report a player or clip", act: "report" }
+            { title: 'Notifications', note: 'NONE', act: 'notifications' },
+            { title: 'Report a player or clip', act: 'report' }
           ]) +
           '<div style="flex:none;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:#fff;border:1px solid rgba(232,51,42,.45);font:600 13px/1 var(--sans);color:var(--red);margin-top:2px" data-action="logout">Log out</div>' +
         '</div>' +
@@ -1898,9 +1892,9 @@ window.S = window.S || {};
         return S.forms.pick('filters.hits', c, c, 'pick--chip');
       }).join('');
 
-      // "My team" is Riptide; "Phase 3" is the current phase only.
+      // "My team" is whichever team the player is on.
       var shown = S.data.hits.filter(function (h) {
-        if (mode === 'My team') return h.team === 'Riptide';
+        if (mode === 'My team') return S.session.team && h.team === S.session.team.name;
         if (mode === 'Phase 3') return h.phase === 3;
         return true;
       });
@@ -1923,15 +1917,21 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>' +
-          (shown.length ? '' : '<div class="empty">No approved clips in this filter yet.</div>') +
+          (shown.length
+            ? '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>'
+            : '<div class="card"><div class="empty">' +
+                (S.data.hits.length ? 'No clips match this filter.'
+                                    : 'No approved clips yet. Land a hit and it shows up here.') +
+              '</div></div>') +
 
-          '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="share">' +
-            '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
-            '<div style="flex:1"><div style="font:500 12px/1.35 var(--sans)">Your clip is live — 128 views</div>' +
-              '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:5px">TAP TO SHARE OUTSIDE THE APP</div></div>' +
-            '<div style="font:400 16px/1;color:var(--n-30)">›</div>' +
-          '</div>' +
+          (S.session.clips.length
+            ? '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="share">' +
+                '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
+                '<div style="flex:1"><div style="font:500 12px/1.35 var(--sans)">Your clip is live</div>' +
+                  '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:5px">TAP TO SHARE OUTSIDE THE APP</div></div>' +
+                '<div style="font:400 16px/1;color:var(--n-30)">›</div>' +
+              '</div>'
+            : '') +
         '</div>' +
         S.tabBar('hits') +
       '</div>';
@@ -1957,34 +1957,40 @@ window.S = window.S || {};
         '</div>';
       }
 
-      var faces = [0, 1, 2].map(function (i) {
+      var team = S.session.team;
+      var sent = S.formState.chat.sent;
+
+      var faces = S.data.roster.slice(0, 3).map(function (m, i) {
         return '<div class="hatch-av" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);' +
           (i ? 'margin-left:-9px' : '') + '"></div>';
       }).join('');
 
+      var head = team ? team.name : 'Team chat';
+      var sub = team
+        ? (S.data.roster.length ? S.data.roster.length + ' ON THE ROSTER' : 'JUST YOU SO FAR')
+        : 'NO TEAM YET';
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 14px;background:linear-gradient(120deg,var(--green-deep),var(--green-light));color:var(--cream);display:flex;align-items:center;gap:12px">' +
-          '<div><div style="font:700 24px/1.1 var(--serif)">Riptide</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--c-80);margin-top:7px">3 ALIVE · 2 OF 3 THIS PHASE</div></div>' +
+          '<div><div style="font:700 24px/1.1 var(--serif)">' + S.esc(head) + '</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--c-80);margin-top:7px">' + sub + '</div></div>' +
           '<div style="flex:1"></div>' +
-          '<div style="display:flex" data-go="team">' + faces + '</div>' +
+          (faces ? '<div style="display:flex" data-go="team">' + faces + '</div>' : '') +
         '</div>' +
 
         '<div style="flex:1;overflow:auto;padding:16px 18px 0;display:flex;flex-direction:column;gap:11px" data-chat-scroll>' +
-          '<div style="text-align:center;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-40)">TODAY</div>' +
-          theirs('MAYA · CAPTAIN', 'Ty walks to the Safeway at 4:45 every day. I\'ve got him. Somebody take Priya.') +
-          theirs('DESHAWN', 'On it. She\'s at practice till 6.') +
-          mine('One more and we clear the phase. Don\'t get caught in a car.') +
-          S.formState.chat.sent.map(function (m) { return mine(S.esc(m)); }).join('') +
-          '<div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:12px;background:rgba(232,51,42,.1);border:1px solid rgba(232,51,42,.35)">' +
-            '<div style="width:13px;height:13px;border-radius:3px;background:var(--red);flex:none"></div>' +
-            '<div style="font:400 11.5px/1.45 var(--sans);color:var(--red-ink)">Ana was eliminated 1 hr ago — she can still read the chat but can\'t post.</div>' +
-          '</div>' +
+          (team
+            ? (sent.length
+                ? '<div style="text-align:center;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-40)">TODAY</div>' +
+                  sent.map(function (m) { return mine(S.esc(m)); }).join('')
+                : '<div class="empty">No messages yet. Say something to your team.</div>')
+            : '<div class="empty">Join or create a team to get a team chat.</div>') +
         '</div>' +
 
         '<div style="padding:10px 18px 0;display:flex;gap:9px;align-items:center">' +
           '<div style="flex:1;height:46px;border-radius:23px;background:#fff;border:1px solid rgba(22,37,107,.15);display:flex;align-items:center;padding:0 16px">' +
-            S.forms.input({ bind: 'chat.draft', placeholder: 'Message Riptide', cls: 'inp--chat', enter: 'send-message' }) +
+            S.forms.input({ bind: 'chat.draft', cls: 'inp--chat', enter: 'send-message',
+              placeholder: team ? 'Message ' + team.name : 'Join a team first' }) +
           '</div>' +
           '<div style="width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font:700 17px/1 var(--sans);color:var(--navy);flex:none" data-action="send-message">↑</div>' +
         '</div>' +
@@ -2053,8 +2059,11 @@ window.S = window.S || {};
         '</div>' +
         '<div style="flex:1;overflow:hidden;padding:13px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px">' + colHead + '</div>' +
-          '<div class="card">' + rows + '</div>' +
-          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' +
+          '<div class="card">' + (rows ||
+            '<div class="empty">' + (mode === 'Teams'
+              ? 'No teams have registered hits yet.'
+              : 'Nobody has landed a hit yet.') + '</div>') + '</div>' +
+          (rows ? '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' : '') +
         '</div>' +
         S.tabBar('leaderboard') +
       '</div>';
@@ -2097,7 +2106,11 @@ window.S = window.S || {};
         '<div class="hdr">' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between">' +
             '<div class="hdr__title">Participants</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--c-70)">41 IN · 19 OUT</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--c-70)">' +
+              (S.data.participants.length
+                ? S.data.participants.filter(function (p) { return !p.out; }).length + ' IN · ' +
+                  S.data.participants.filter(function (p) { return p.out; }).length + ' OUT'
+                : 'NOBODY YET') + '</div>' +
           '</div>' +
           '<div class="hdr__chips">' + chips + '</div>' +
         '</div>' +
@@ -2106,7 +2119,9 @@ window.S = window.S || {};
             S.forms.input({ bind: 'search.participants', placeholder: 'Search players', live: true }) +
           '</div>' +
           '<div class="card">' + (rows ||
-            '<div class="empty">No players match “' + S.esc(S.formState.search.participants) + '”.</div>') + '</div>' +
+            '<div class="empty">' + (S.data.participants.length
+              ? 'No players match “' + S.esc(S.formState.search.participants) + '”.'
+              : 'No players in this game yet.') + '</div>') + '</div>' +
         '</div>' +
         S.tabBar('participants') +
       '</div>';
@@ -2161,11 +2176,13 @@ window.S = window.S || {};
   S.screens.tag = {
     id: 'tag', code: '1c', label: 'Tag',
     render: function () {
-      var filters = ['All teams', 'Undertow', 'Kraken', 'Tide'].map(function (f, i) {
-        return i === 0
-          ? '<div style="padding:7px 12px;border-radius:99px;background:var(--navy);color:var(--cream);font:500 11px/1 var(--sans)">' + f + '</div>'
-          : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + f + '</div>';
-      }).join('');
+      // Team filters come from the teams actually in the game.
+      var filters = ['All teams'].concat(S.data.teams.map(function (t) { return t.name; }))
+        .map(function (f, i) {
+          return i === 0
+            ? '<div style="padding:7px 12px;border-radius:99px;background:var(--navy);color:var(--cream);font:500 11px/1 var(--sans)">' + S.esc(f) + '</div>'
+            : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + S.esc(f) + '</div>';
+        }).join('');
 
       var q = S.formState.search.tag.trim().toLowerCase();
       var targets = S.data.targets.filter(function (t) {
@@ -2207,13 +2224,13 @@ window.S = window.S || {};
               '<div style="font:400 10.5px/1 var(--mono);color:var(--green);margin-top:6px">VIDEO UPLOADING · 62%</div></div>' +
           '</div>' +
           '<div class="field-line" style="background:#F1EEE4;border-color:var(--n-12)">' +
-            S.forms.input({ bind: 'search.tag', placeholder: 'Search 41 players in this game', live: true }) +
+            S.forms.input({ bind: 'search.tag', placeholder: 'Search players in this game', live: true }) +
           '</div>' +
           '<div style="display:flex;gap:7px;margin-top:12px">' + filters + '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' +
-          (list || '<div class="empty">No players match “' + S.esc(S.formState.search.tag) + '”.</div>') +
+          (list || '<div class="empty">' + (S.data.targets.length ? 'No players match “' + S.esc(S.formState.search.tag) + '”.' : 'Nobody to tag yet — no other players have joined this game.') + '</div>') +
         '</div>' +
 
         '<div style="padding:12px 20px 34px;background:#fff;border-top:1px solid var(--n-10)">' +
@@ -2233,6 +2250,10 @@ window.S = window.S || {};
           '<span style="color:var(--n-55)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
       }
 
+      // Whoever was picked in step 2. Nothing invented if nobody was.
+      var tag = S.session.tagged;
+      if (tag) tag.first = tag.name.split(' ')[0];
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 12px;display:flex;align-items:center;justify-content:space-between">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--n-55)" data-go="tag">Back</div>' +
@@ -2242,7 +2263,10 @@ window.S = window.S || {};
 
         '<div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">' +
           '<div style="font:700 27px/1.15 var(--serif)">Check it, then send it in</div>' +
-          '<div style="font:400 12.5px/1.45 var(--sans);color:var(--n-60);margin-top:-4px">Ty says whether he got hit. If he denies it, an admin watches the video and decides.</div>' +
+          '<div style="font:400 12.5px/1.45 var(--sans);color:var(--n-60);margin-top:-4px">' +
+            (tag ? S.esc(tag.first) + ' says whether they got hit. If they deny it, an admin watches the video and decides.'
+                 : 'Whoever you tagged says whether they got hit. If they deny it, an admin watches the video and decides.') +
+          '</div>' +
 
           '<div style="border-radius:14px;overflow:hidden;border:1px solid var(--n-12);background:#fff">' +
             '<div class="hatch-vid-lg" style="height:212px;position:relative">' +
@@ -2256,15 +2280,15 @@ window.S = window.S || {};
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;gap:11px">' +
-            line('Who you hit', 'Ty Brennan · Undertow') +
-            line('Time of hit', 'Today, 4:52 PM') +
-            line('Goes to', 'Ty, then admin if denied') +
+            line('Who you hit', tag ? S.esc(tag.name) + (tag.team ? ' · ' + S.esc(tag.team) : '') : 'Not tagged yet') +
+            line('Time of hit', 'Now') +
+            line('Goes to', tag ? S.esc(tag.first) + ', then admin if denied' : 'Them, then admin if denied') +
             line('Visible to', 'Game participants') +
           '</div>' +
 
           '<div style="display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,181,36,.14);border:1px solid rgba(255,181,36,.45)">' +
             '<div style="width:16px;height:16px;border-radius:4px;background:var(--gold);flex:none;margin-top:1px"></div>' +
-            '<div style="font:400 12px/1.45 var(--sans);color:var(--gold-ink-soft)">Trim or re-edit as much as you like before sending. If Ty confirms the hit he’s out straight away. If he denies it, an admin makes the call.</div>' +
+            '<div style="font:400 12px/1.45 var(--sans);color:var(--gold-ink-soft)">Trim or re-edit as much as you like before sending. If they confirm the hit they’re out straight away. If they deny it, an admin makes the call.</div>' +
           '</div>' +
         '</div>' +
 
@@ -2294,6 +2318,27 @@ window.S = window.S || {};
         '</div>';
       }
 
+      var p = S.session.pending;
+
+      // Nothing submitted yet — no invented player, no fake timeline.
+      if (!p) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 18px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="hits">‹ Activity</div>' +
+            '<div style="font:700 28px/1.15 var(--serif);margin-top:18px">My hits</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">NOTHING SUBMITTED</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:14px">' +
+            '<div class="card"><div class="empty">You haven’t submitted a hit yet. Record one and its review status shows up here.</div></div>' +
+          '</div>' +
+          '<div style="padding:12px 20px 12px">' +
+            '<button class="cta" style="height:52px" data-go="camera">RECORD A HIT</button>' +
+          '</div>' +
+          S.tabBar('home') +
+        '</div>';
+      }
+
+      var first = p.target.split(' ')[0];
       return '<div class="screen">' +
         '<div style="padding:56px 20px 18px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="hits">‹ Activity</div>' +
@@ -2301,8 +2346,8 @@ window.S = window.S || {};
             '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold)"></div>' +
             '<div style="font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--gold-light)">UNDER REVIEW</div>' +
           '</div>' +
-          '<div style="font:700 28px/1.15 var(--serif);margin-top:14px">You → Ty Brennan</div>' +
-          '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">SUBMITTED TODAY, 4:53 PM · #S-2841</div>' +
+          '<div style="font:700 28px/1.15 var(--serif);margin-top:14px">You → ' + S.esc(p.target) + '</div>' +
+          '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">SUBMITTED ' + S.esc(p.at) + '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:14px">' +
@@ -2312,10 +2357,10 @@ window.S = window.S || {};
           '</div>' +
           '<div class="mono-label">TIMELINE</div>' +
           '<div style="display:flex;flex-direction:column;gap:0">' +
-            step({ dot: 'var(--green)', title: 'Submitted', note: '4:53 PM · VIDEO VERIFIED ON SERVER', mono: true }) +
+            step({ dot: 'var(--green)', title: 'Submitted', note: 'VIDEO VERIFIED ON SERVER', mono: true }) +
             step({ dot: 'var(--green)', title: 'Eligibility checks passed', note: 'Different teams · target alive · phase active' }) +
-            step({ dot: 'var(--gold)', title: 'Sent to Ty Brennan to confirm', note: 'If he denies it, an admin reviews · auto-confirms in 21h 40m' }) +
-            step({ dot: 'rgba(22,37,107,.18)', title: 'Ty eliminated', note: 'PENDING', mono: true, pending: true, last: true }) +
+            step({ dot: 'var(--gold)', title: 'Sent to ' + S.esc(p.target) + ' to confirm', note: 'If they deny it, an admin reviews' }) +
+            step({ dot: 'rgba(22,37,107,.18)', title: S.esc(first) + ' eliminated', note: 'PENDING', mono: true, pending: true, last: true }) +
           '</div>' +
         '</div>' +
 
@@ -2339,11 +2384,29 @@ window.S = window.S || {};
           '<span style="color:var(--n-55)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
       }
 
+      var claim = S.session.incoming;
+
+      // Nobody has claimed a hit on you — nothing to confirm or deny.
+      if (!claim) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="font:400 10px/1 var(--mono);letter-spacing:.14em;color:var(--c-80)">CLAIMS AGAINST YOU</div>' +
+            '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Nobody’s got you</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">NOTHING TO ANSWER</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
+            '<div class="card"><div class="empty">When someone claims they soaked you, their clip lands here and you confirm or deny it.</div></div>' +
+          '</div>' +
+          S.tabBar('home') +
+        '</div>';
+      }
+
+      var by = claim.by.split(' ')[0];
       return '<div class="screen">' +
         '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--red),var(--orange));color:var(--cream)">' +
           '<div style="font:400 10px/1 var(--mono);letter-spacing:.14em;color:var(--c-80)">SOMEONE SAYS THEY GOT YOU</div>' +
-          '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Did Maya soak you?</div>' +
-          '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">TAGGED 6 MIN AGO · YOU HAVE 22H TO ANSWER</div>' +
+          '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Did ' + S.esc(by) + ' soak you?</div>' +
+          '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">YOU HAVE 22H TO ANSWER</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
@@ -2353,9 +2416,9 @@ window.S = window.S || {};
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:10px">' +
-            line('Claimed by', 'Maya Okonkwo · Riptide') +
-            line('When', 'Today, 4:52 PM') +
-            line('Counts toward', 'Riptide, phase 3') +
+            line('Claimed by', S.esc(claim.by) + (claim.team ? ' · ' + S.esc(claim.team) : '')) +
+            line('When', S.esc(claim.at)) +
+            line('Counts toward', claim.team ? S.esc(claim.team) : 'Their team') +
           '</div>' +
 
           '<div style="display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--n-05)">' +
@@ -2365,7 +2428,7 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;flex-direction:column;gap:9px">' +
-          '<button class="cta cta--red" data-go="leaderboard">YEAH, SHE GOT ME</button>' +
+          '<button class="cta cta--red" data-go="leaderboard">YEAH, THEY GOT ME</button>' +
           '<div style="height:52px;border-radius:12px;background:#fff;border:1px solid var(--n-25);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="home">No — send it to an admin</div>' +
         '</div>' +
         S.tabBar('home') +
@@ -2383,6 +2446,9 @@ window.S = window.S || {};
   S.screens.teams = {
     id: 'teams', code: '1o', label: 'Teams',
     render: function () {
+      // The highlighted suggestion is just the first team with room.
+      var pick = S.data.openTeams[0] || null;
+
       var list = S.data.openTeams.map(function (t) {
         return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:' +
             (t.pick ? '2px solid var(--gold)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:12px 14px">' +
@@ -2405,9 +2471,10 @@ window.S = window.S || {};
           '</div>' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">' +
             '<div class="mono-label">OPEN SLOTS</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">4 OF 9 TEAMS</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">' +
+              (S.data.openTeams.length ? S.data.openTeams.length + ' WITH ROOM' : 'NONE') + '</div>' +
           '</div>' +
-          list +
+          (list || '<div class="card"><div class="empty">No teams have been created in this game yet. Start the first one below.</div></div>') +
 
           '<div style="display:flex;align-items:center;gap:11px;margin:10px 0 4px">' +
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
@@ -2425,8 +2492,13 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;gap:10px">' +
-          '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-action="join-team">ASK TO JOIN TIDE</button>' +
-          '<div style="flex:1;height:54px;border-radius:12px;border:1px solid var(--n-25);display:flex;align-items:center;justify-content:center;font:600 12.5px/1 var(--sans)" data-go="newteam">Create · $5</div>' +
+          (pick
+            ? '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-action="join-team">ASK TO JOIN ' +
+                S.esc(pick.name.toUpperCase()) + '</button>'
+            : '') +
+          '<div style="flex:1;height:54px;border-radius:12px;' +
+            (pick ? 'border:1px solid var(--n-25);' : 'background:var(--gold);color:var(--navy);font-weight:700;') +
+            'display:flex;align-items:center;justify-content:center;font:600 12.5px/1 var(--sans)" data-go="newteam">Create · $5</div>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';
@@ -2438,20 +2510,12 @@ window.S = window.S || {};
   S.screens.newteam = {
     id: 'newteam', code: '1p', label: 'New team',
     render: function () {
-      // Faded swatches are colors already claimed in this game.
-      var swatches = [
-        { c: '#12A66B', taken: true },
-        { c: '#E8332A', taken: true },
-        { c: '#7C3AED', taken: true },
-        { c: '#1F79F5', taken: true },
-        { c: '#F0A500' },
-        { c: '#16256B' }
-      ].map(function (s) {
-        // Taken colors render faded and aren't selectable.
-        if (s.taken) {
-          return '<div class="pick--swatch is-taken" style="background:' + s.c + '"></div>';
+      // Colors already claimed in this game render faded and aren't selectable.
+      var swatches = S.data.palette.map(function (s) {
+        if (S.data.taken.indexOf(s.c) >= 0) {
+          return '<div class="pick--swatch is-taken" style="background:' + s.c + '" title="Taken"></div>';
         }
-        return S.forms.pick('newteam.color', s.c, '', 'pick--swatch') .replace(
+        return S.forms.pick('newteam.color', s.c, '', 'pick--swatch').replace(
           'class="pick pick--swatch"', 'class="pick pick--swatch" style="background:' + s.c + '"');
       }).join('');
 
@@ -2480,7 +2544,7 @@ window.S = window.S || {};
           '<div>' +
             '<div class="field-label" style="color:var(--n-50);margin-bottom:8px">TEAM COLOR</div>' +
             '<div style="display:flex;gap:9px">' + swatches + '</div>' +
-            '<div style="font:400 11px/1.4 var(--sans);color:var(--n-50);margin-top:8px">Faded colors are already taken in this game.</div>' +
+            '<div style="font:400 11px/1.4 var(--sans);color:var(--n-50);margin-top:8px">' + (S.data.taken.length ? 'Faded colors are already taken in this game.' : 'Every color is still available.') + '</div>' +
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:13px 15px">' +
@@ -2497,12 +2561,12 @@ window.S = window.S || {};
                 '<div class="field-label" style="color:var(--n-50);margin:0">TEAM CREATION FEE</div>' +
                 '<div style="font:700 34px/1 var(--serif);margin-top:9px">$5.00</div>' +
               '</div>' +
-              '<div style="text-align:right;font:400 10.5px/1.5 var(--mono);color:var(--n-45)">CHARGED ONCE<br/>APPLE PAY ···· 4417</div>' +
+              '<div style="text-align:right;font:400 10.5px/1.5 var(--mono);color:var(--n-45)">CHARGED ONCE<br/>' + (S.formState.payment.method === 'apple' ? 'APPLE PAY' : 'YOUR SAVED METHOD') + '</div>' +
             '</div>' +
             '<div style="padding:12px 15px;border-top:1px solid var(--n-07);display:flex;flex-direction:column;gap:9px">' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
                 '<div style="display:flex;align-items:center;gap:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 12px/1 var(--sans)">To the Westside prize pot</div></div>' +
+                '<div style="font:400 12px/1 var(--sans)">To the game prize pot</div></div>' +
                 '<div style="font:600 12px/1 var(--sans)">$3.00</div>' +
               '</div>' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -2590,15 +2654,15 @@ window.S = window.S || {};
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">' + caption + '</div>' +
-          rows +
+          (rows || '<div class="card"><div class="empty">Nothing to rank yet.</div></div>') +
           '<div style="margin-top:8px;padding:14px 15px;border-radius:12px;background:var(--canvas);border:1px dashed var(--n-20)">' +
             '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-50)">YOUR LINE</div>' +
             '<div style="display:flex;align-items:center;gap:13px;margin-top:11px">' +
-              '<div style="font:700 20px/1 var(--serif);width:26px">7</div>' +
+              '<div style="font:700 20px/1 var(--serif);width:26px">—</div>' +
               '<div class="hatch-av" style="width:40px;height:40px;border-radius:8px"></div>' +
               '<div style="flex:1"><div style="font:600 14px/1.2 var(--sans)">You</div>' +
-                '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">3 HITS · 1 PENDING</div></div>' +
-              '<div style="font:400 11px/1 var(--sans);color:var(--green)">+2 this week</div>' +
+                '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">0 HITS</div></div>' +
+              '' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -2612,6 +2676,25 @@ window.S = window.S || {};
   S.screens.team = {
     id: 'team', code: '1i', label: 'Team',
     render: function () {
+      var team = S.session.team;
+
+      // Not on a team yet — nothing to show, so point them at picking one.
+      if (!team) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="position:relative;font:500 13px/1 var(--sans);color:var(--c-75)" data-go="teams">‹ Teams</div>' +
+            '<div style="font:700 34px/1.05 var(--serif);margin-top:16px">No team yet</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
+            '<div class="card"><div class="empty">You’re not on a team. Join one with an open slot or start your own.</div></div>' +
+          '</div>' +
+          '<div style="padding:12px 20px 12px">' +
+            '<button class="cta" style="height:52px" data-go="teams">PICK A TEAM</button>' +
+          '</div>' +
+          S.tabBar('chat') +
+        '</div>';
+      }
+
       var roster = S.data.roster.map(function (m) {
         return '<div style="display:flex;align-items:center;gap:12px;background:' +
             (m.out ? 'var(--n-04);border:1px solid var(--n-08)' : '#fff;border:1px solid var(--n-10)') +
@@ -2637,22 +2720,22 @@ window.S = window.S || {};
         '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--green-deep),var(--green-light));color:var(--cream);position:relative;overflow:hidden">' +
           '<div style="position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 12px,transparent 12px 30px)"></div>' +
           '<div style="position:relative;font:500 13px/1 var(--sans);color:var(--c-75)" data-go="teams">‹ Teams</div>' +
-          '<div style="position:relative;font:700 34px/1.05 var(--serif);margin-top:16px">Riptide</div>' +
+          '<div style="position:relative;font:700 34px/1.05 var(--serif);margin-top:16px">' + S.esc(team.name) + '</div>' +
           '<div style="position:relative;display:flex;gap:24px;margin-top:16px">' +
-            stat('2nd', 'PLACE') + stat('12', 'HITS') + stat('3/5', 'ALIVE') +
+            stat('—', 'PLACE') + stat('0', 'HITS') + stat((S.data.roster.length || 1) + '/5', 'ALIVE') +
           '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between">' +
             '<div class="mono-label">ROSTER · 5 MAX</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">CAPTAIN: MAYA O.</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">' + (S.data.roster.length ? '' : 'JUST YOU') + '</div>' +
           '</div>' +
-          roster +
+          (roster || '<div class="card"><div class="empty">Just you so far. Invite up to four more players.</div></div>') +
         '</div>' +
 
         '<div style="padding:12px 20px 12px">' +
-          '<div style="height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="chat">Team chat · 4 new</div>' +
+          '<div style="height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="chat">Team chat</div>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';
@@ -2684,34 +2767,44 @@ window.S = window.S || {};
         '</div>';
       }
 
+      // Your own profile, built from what you entered at sign up.
+      var me = S.me();
+      var ses = S.session;
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 22px;background:linear-gradient(140deg,var(--navy) 40%,var(--team-purple) 100%);color:var(--cream)">' +
           '<div style="display:flex;gap:15px;align-items:center">' +
             '<div class="hatch-navy" style="width:76px;height:76px;border-radius:50%"></div>' +
             '<div style="flex:1">' +
-              '<div style="font:700 26px/1.1 var(--serif)">Maya Okonkwo</div>' +
-              '<div style="font:400 10.5px/1 var(--mono);color:var(--c-55);margin-top:7px">JOINED MAY \'26</div>' +
-              '<div style="display:flex;align-items:center;gap:7px;margin-top:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 11.5px/1 var(--sans);color:var(--c-80)">Riptide · captain</div></div>' +
+              '<div style="font:700 26px/1.1 var(--serif)">' +
+                (me.hasName ? S.esc(me.name) : 'Your profile') + '</div>' +
+              '<div style="font:400 10.5px/1 var(--mono);color:var(--c-55);margin-top:7px">' +
+                (me.grade ? S.esc(me.grade.toUpperCase()) + ' GRADE' : 'NO GRADE SET') + '</div>' +
+              '<div style="display:flex;align-items:center;gap:7px;margin-top:9px">' +
+                '<div style="width:9px;height:9px;border-radius:2px;background:' +
+                  (ses.team ? ses.team.color : 'var(--n-30)') + '"></div>' +
+                '<div style="font:400 11.5px/1 var(--sans);color:var(--c-80)">' +
+                  (ses.team ? S.esc(ses.team.name) : 'No team yet') + '</div></div>' +
             '</div>' +
           '</div>' +
-          '<div style="font:400 12.5px/1.5 var(--sans);color:var(--c-70);margin-top:16px">Cross country. Undefeated in the parking lot. Will not be caught twice.</div>' +
-          '<div style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.16);border:1px solid rgba(255,181,36,.45)">' +
-            '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold)"></div>' +
-            '<div style="font:500 10px/1 var(--mono);letter-spacing:.1em;color:var(--gold-light)">FAIR GAME · NOT ON YOUR TEAM</div>' +
-          '</div>' +
+          '<div style="font:400 12.5px/1.5 var(--sans);color:var(--c-70);margin-top:16px">' +
+            'No bio yet.</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
           '<div style="display:flex;gap:9px">' +
-            stat('5', 'HITS<br/>LANDED') + stat('1', 'TIMES<br/>SOAKED') + stat('12d', 'LONGEST<br/>SURVIVAL') +
+            stat(me.elims, 'HITS<br/>LANDED') + stat(me.soaked, 'TIMES<br/>SOAKED') +
+            stat(ses.game ? '0d' : '—', 'LONGEST<br/>SURVIVAL') +
           '</div>' +
           '<div class="mono-label">APPROVED CLIPS</div>' +
-          '<div style="display:flex;gap:9px">' + clip('0:14') + clip('0:09') + clip('0:22') + '</div>' +
+          (ses.clips.length
+            ? '<div style="display:flex;gap:9px">' + ses.clips.map(function (c) { return clip(c.time); }).join('') + '</div>'
+            : '<div class="card"><div class="empty">No approved clips yet.</div></div>') +
           '<div class="mono-label" style="margin-top:2px">GAME HISTORY</div>' +
           '<div class="card">' +
-            game("Westside Soak '26", 'ACTIVE · PHASE 3 · WEEK 3', 'ALIVE', true) +
-            game('Junior Spring Skirmish', 'COMPLETED · 4TH OF 60', 'OUT', false) +
+            (ses.game
+              ? game('Game ' + S.esc(ses.game.code), 'ACTIVE', 'ALIVE', true)
+              : '<div class="empty">You haven’t joined a game yet.</div>') +
           '</div>' +
         '</div>' +
 
@@ -2912,10 +3005,13 @@ window.S = window.S || {};
         S.toast('Entry paid. Pick a team next.');
         return;
 
-      case 'join-team':
-        S.session.team = { name: 'Tide', color: '#1F79F5' };
+      case 'join-team': {
+        var open = S.data.openTeams[0];
+        if (!open) { S.toast('No teams with open slots yet.'); return; }
+        S.session.team = { name: open.name, color: open.color };
         go('team');
         return;
+      }
 
       case 'create-team':
         S.session.team = { name: fs.newteam.name.trim(), color: fs.newteam.color };

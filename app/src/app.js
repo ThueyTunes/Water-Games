@@ -186,10 +186,13 @@
         S.toast('Entry paid. Pick a team next.');
         return;
 
-      case 'join-team':
-        S.session.team = { name: 'Tide', color: '#1F79F5' };
+      case 'join-team': {
+        var open = S.data.openTeams[0];
+        if (!open) { S.toast('No teams with open slots yet.'); return; }
+        S.session.team = { name: open.name, color: open.color };
         go('team');
         return;
+      }
 
       case 'create-team':
         S.session.team = { name: fs.newteam.name.trim(), color: fs.newteam.color };

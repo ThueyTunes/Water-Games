@@ -8,6 +8,9 @@
   S.screens.teams = {
     id: 'teams', code: '1o', label: 'Teams',
     render: function () {
+      // The highlighted suggestion is just the first team with room.
+      var pick = S.data.openTeams[0] || null;
+
       var list = S.data.openTeams.map(function (t) {
         return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:' +
             (t.pick ? '2px solid var(--gold)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:12px 14px">' +
@@ -30,9 +33,10 @@
           '</div>' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">' +
             '<div class="mono-label">OPEN SLOTS</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">4 OF 9 TEAMS</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">' +
+              (S.data.openTeams.length ? S.data.openTeams.length + ' WITH ROOM' : 'NONE') + '</div>' +
           '</div>' +
-          list +
+          (list || '<div class="card"><div class="empty">No teams have been created in this game yet. Start the first one below.</div></div>') +
 
           '<div style="display:flex;align-items:center;gap:11px;margin:10px 0 4px">' +
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
@@ -50,8 +54,13 @@
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;gap:10px">' +
-          '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-action="join-team">ASK TO JOIN TIDE</button>' +
-          '<div style="flex:1;height:54px;border-radius:12px;border:1px solid var(--n-25);display:flex;align-items:center;justify-content:center;font:600 12.5px/1 var(--sans)" data-go="newteam">Create · $5</div>' +
+          (pick
+            ? '<button class="cta" style="flex:1.3;height:54px;font-size:14px;letter-spacing:.08em" data-action="join-team">ASK TO JOIN ' +
+                S.esc(pick.name.toUpperCase()) + '</button>'
+            : '') +
+          '<div style="flex:1;height:54px;border-radius:12px;' +
+            (pick ? 'border:1px solid var(--n-25);' : 'background:var(--gold);color:var(--navy);font-weight:700;') +
+            'display:flex;align-items:center;justify-content:center;font:600 12.5px/1 var(--sans)" data-go="newteam">Create · $5</div>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';
@@ -63,20 +72,12 @@
   S.screens.newteam = {
     id: 'newteam', code: '1p', label: 'New team',
     render: function () {
-      // Faded swatches are colors already claimed in this game.
-      var swatches = [
-        { c: '#12A66B', taken: true },
-        { c: '#E8332A', taken: true },
-        { c: '#7C3AED', taken: true },
-        { c: '#1F79F5', taken: true },
-        { c: '#F0A500' },
-        { c: '#16256B' }
-      ].map(function (s) {
-        // Taken colors render faded and aren't selectable.
-        if (s.taken) {
-          return '<div class="pick--swatch is-taken" style="background:' + s.c + '"></div>';
+      // Colors already claimed in this game render faded and aren't selectable.
+      var swatches = S.data.palette.map(function (s) {
+        if (S.data.taken.indexOf(s.c) >= 0) {
+          return '<div class="pick--swatch is-taken" style="background:' + s.c + '" title="Taken"></div>';
         }
-        return S.forms.pick('newteam.color', s.c, '', 'pick--swatch') .replace(
+        return S.forms.pick('newteam.color', s.c, '', 'pick--swatch').replace(
           'class="pick pick--swatch"', 'class="pick pick--swatch" style="background:' + s.c + '"');
       }).join('');
 
@@ -105,7 +106,7 @@
           '<div>' +
             '<div class="field-label" style="color:var(--n-50);margin-bottom:8px">TEAM COLOR</div>' +
             '<div style="display:flex;gap:9px">' + swatches + '</div>' +
-            '<div style="font:400 11px/1.4 var(--sans);color:var(--n-50);margin-top:8px">Faded colors are already taken in this game.</div>' +
+            '<div style="font:400 11px/1.4 var(--sans);color:var(--n-50);margin-top:8px">' + (S.data.taken.length ? 'Faded colors are already taken in this game.' : 'Every color is still available.') + '</div>' +
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:13px 15px">' +
@@ -122,12 +123,12 @@
                 '<div class="field-label" style="color:var(--n-50);margin:0">TEAM CREATION FEE</div>' +
                 '<div style="font:700 34px/1 var(--serif);margin-top:9px">$5.00</div>' +
               '</div>' +
-              '<div style="text-align:right;font:400 10.5px/1.5 var(--mono);color:var(--n-45)">CHARGED ONCE<br/>APPLE PAY ···· 4417</div>' +
+              '<div style="text-align:right;font:400 10.5px/1.5 var(--mono);color:var(--n-45)">CHARGED ONCE<br/>' + (S.formState.payment.method === 'apple' ? 'APPLE PAY' : 'YOUR SAVED METHOD') + '</div>' +
             '</div>' +
             '<div style="padding:12px 15px;border-top:1px solid var(--n-07);display:flex;flex-direction:column;gap:9px">' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
                 '<div style="display:flex;align-items:center;gap:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 12px/1 var(--sans)">To the Westside prize pot</div></div>' +
+                '<div style="font:400 12px/1 var(--sans)">To the game prize pot</div></div>' +
                 '<div style="font:600 12px/1 var(--sans)">$3.00</div>' +
               '</div>' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -215,15 +216,15 @@
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">' + caption + '</div>' +
-          rows +
+          (rows || '<div class="card"><div class="empty">Nothing to rank yet.</div></div>') +
           '<div style="margin-top:8px;padding:14px 15px;border-radius:12px;background:var(--canvas);border:1px dashed var(--n-20)">' +
             '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-50)">YOUR LINE</div>' +
             '<div style="display:flex;align-items:center;gap:13px;margin-top:11px">' +
-              '<div style="font:700 20px/1 var(--serif);width:26px">7</div>' +
+              '<div style="font:700 20px/1 var(--serif);width:26px">—</div>' +
               '<div class="hatch-av" style="width:40px;height:40px;border-radius:8px"></div>' +
               '<div style="flex:1"><div style="font:600 14px/1.2 var(--sans)">You</div>' +
-                '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">3 HITS · 1 PENDING</div></div>' +
-              '<div style="font:400 11px/1 var(--sans);color:var(--green)">+2 this week</div>' +
+                '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">0 HITS</div></div>' +
+              '' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -237,6 +238,25 @@
   S.screens.team = {
     id: 'team', code: '1i', label: 'Team',
     render: function () {
+      var team = S.session.team;
+
+      // Not on a team yet — nothing to show, so point them at picking one.
+      if (!team) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="position:relative;font:500 13px/1 var(--sans);color:var(--c-75)" data-go="teams">‹ Teams</div>' +
+            '<div style="font:700 34px/1.05 var(--serif);margin-top:16px">No team yet</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
+            '<div class="card"><div class="empty">You’re not on a team. Join one with an open slot or start your own.</div></div>' +
+          '</div>' +
+          '<div style="padding:12px 20px 12px">' +
+            '<button class="cta" style="height:52px" data-go="teams">PICK A TEAM</button>' +
+          '</div>' +
+          S.tabBar('chat') +
+        '</div>';
+      }
+
       var roster = S.data.roster.map(function (m) {
         return '<div style="display:flex;align-items:center;gap:12px;background:' +
             (m.out ? 'var(--n-04);border:1px solid var(--n-08)' : '#fff;border:1px solid var(--n-10)') +
@@ -262,22 +282,22 @@
         '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--green-deep),var(--green-light));color:var(--cream);position:relative;overflow:hidden">' +
           '<div style="position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.06) 0 12px,transparent 12px 30px)"></div>' +
           '<div style="position:relative;font:500 13px/1 var(--sans);color:var(--c-75)" data-go="teams">‹ Teams</div>' +
-          '<div style="position:relative;font:700 34px/1.05 var(--serif);margin-top:16px">Riptide</div>' +
+          '<div style="position:relative;font:700 34px/1.05 var(--serif);margin-top:16px">' + S.esc(team.name) + '</div>' +
           '<div style="position:relative;display:flex;gap:24px;margin-top:16px">' +
-            stat('2nd', 'PLACE') + stat('12', 'HITS') + stat('3/5', 'ALIVE') +
+            stat('—', 'PLACE') + stat('0', 'HITS') + stat((S.data.roster.length || 1) + '/5', 'ALIVE') +
           '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
           '<div style="display:flex;align-items:baseline;justify-content:space-between">' +
             '<div class="mono-label">ROSTER · 5 MAX</div>' +
-            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">CAPTAIN: MAYA O.</div>' +
+            '<div style="font:400 10px/1 var(--mono);color:var(--n-40)">' + (S.data.roster.length ? '' : 'JUST YOU') + '</div>' +
           '</div>' +
-          roster +
+          (roster || '<div class="card"><div class="empty">Just you so far. Invite up to four more players.</div></div>') +
         '</div>' +
 
         '<div style="padding:12px 20px 12px">' +
-          '<div style="height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="chat">Team chat · 4 new</div>' +
+          '<div style="height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="chat">Team chat</div>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';
@@ -309,34 +329,44 @@
         '</div>';
       }
 
+      // Your own profile, built from what you entered at sign up.
+      var me = S.me();
+      var ses = S.session;
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 22px;background:linear-gradient(140deg,var(--navy) 40%,var(--team-purple) 100%);color:var(--cream)">' +
           '<div style="display:flex;gap:15px;align-items:center">' +
             '<div class="hatch-navy" style="width:76px;height:76px;border-radius:50%"></div>' +
             '<div style="flex:1">' +
-              '<div style="font:700 26px/1.1 var(--serif)">Maya Okonkwo</div>' +
-              '<div style="font:400 10.5px/1 var(--mono);color:var(--c-55);margin-top:7px">JOINED MAY \'26</div>' +
-              '<div style="display:flex;align-items:center;gap:7px;margin-top:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 11.5px/1 var(--sans);color:var(--c-80)">Riptide · captain</div></div>' +
+              '<div style="font:700 26px/1.1 var(--serif)">' +
+                (me.hasName ? S.esc(me.name) : 'Your profile') + '</div>' +
+              '<div style="font:400 10.5px/1 var(--mono);color:var(--c-55);margin-top:7px">' +
+                (me.grade ? S.esc(me.grade.toUpperCase()) + ' GRADE' : 'NO GRADE SET') + '</div>' +
+              '<div style="display:flex;align-items:center;gap:7px;margin-top:9px">' +
+                '<div style="width:9px;height:9px;border-radius:2px;background:' +
+                  (ses.team ? ses.team.color : 'var(--n-30)') + '"></div>' +
+                '<div style="font:400 11.5px/1 var(--sans);color:var(--c-80)">' +
+                  (ses.team ? S.esc(ses.team.name) : 'No team yet') + '</div></div>' +
             '</div>' +
           '</div>' +
-          '<div style="font:400 12.5px/1.5 var(--sans);color:var(--c-70);margin-top:16px">Cross country. Undefeated in the parking lot. Will not be caught twice.</div>' +
-          '<div style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.16);border:1px solid rgba(255,181,36,.45)">' +
-            '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold)"></div>' +
-            '<div style="font:500 10px/1 var(--mono);letter-spacing:.1em;color:var(--gold-light)">FAIR GAME · NOT ON YOUR TEAM</div>' +
-          '</div>' +
+          '<div style="font:400 12.5px/1.5 var(--sans);color:var(--c-70);margin-top:16px">' +
+            'No bio yet.</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
           '<div style="display:flex;gap:9px">' +
-            stat('5', 'HITS<br/>LANDED') + stat('1', 'TIMES<br/>SOAKED') + stat('12d', 'LONGEST<br/>SURVIVAL') +
+            stat(me.elims, 'HITS<br/>LANDED') + stat(me.soaked, 'TIMES<br/>SOAKED') +
+            stat(ses.game ? '0d' : '—', 'LONGEST<br/>SURVIVAL') +
           '</div>' +
           '<div class="mono-label">APPROVED CLIPS</div>' +
-          '<div style="display:flex;gap:9px">' + clip('0:14') + clip('0:09') + clip('0:22') + '</div>' +
+          (ses.clips.length
+            ? '<div style="display:flex;gap:9px">' + ses.clips.map(function (c) { return clip(c.time); }).join('') + '</div>'
+            : '<div class="card"><div class="empty">No approved clips yet.</div></div>') +
           '<div class="mono-label" style="margin-top:2px">GAME HISTORY</div>' +
           '<div class="card">' +
-            game("Westside Soak '26", 'ACTIVE · PHASE 3 · WEEK 3', 'ALIVE', true) +
-            game('Junior Spring Skirmish', 'COMPLETED · 4TH OF 60', 'OUT', false) +
+            (ses.game
+              ? game('Game ' + S.esc(ses.game.code), 'ACTIVE', 'ALIVE', true)
+              : '<div class="empty">You haven’t joined a game yet.</div>') +
           '</div>' +
         '</div>' +
 

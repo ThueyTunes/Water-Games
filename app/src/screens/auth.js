@@ -211,12 +211,16 @@
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
           '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
-            '<div class="team-bar" style="background:var(--navy)"></div>' +
-            '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Westside Soak \'26</div>' +
-              '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">REGISTRATION OPEN · 41 JOINED · $25</div></div>' +
-            '<div style="padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.2);font:600 10px/1 var(--mono);color:var(--gold-ink)">JOIN</div>' +
-          '</div>' +
+          (S.data.openGames.length
+            ? S.data.openGames.map(function (g) {
+                return '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="focus-game-code">' +
+                  '<div class="team-bar" style="background:var(--navy)"></div>' +
+                  '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">' + S.esc(g.name) + '</div>' +
+                    '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + S.esc(g.status) + '</div></div>' +
+                  '<div style="padding:6px 11px;border-radius:99px;background:rgba(255,181,36,.2);font:600 10px/1 var(--mono);color:var(--gold-ink)">JOIN</div>' +
+                '</div>';
+              }).join('')
+            : '<div class="card"><div class="empty">No public games right now. You’ll need a code from whoever runs yours.</div></div>') +
         '</div>' +
 
         '<div style="padding:12px 24px 12px">' +
@@ -255,7 +259,9 @@
 
         '<div style="flex:1;overflow:hidden;padding:0 24px;display:flex;flex-direction:column;gap:16px">' +
           '<div style="font:700 32px/1.1 var(--serif);margin-top:10px">Pay in to play</div>' +
-          '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60)">Westside Soak \'26 · one-time entry, non-refundable once the phase opens.</div>' +
+          '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60)">Game ' +
+            S.esc(S.formState.join.code || '——————') +
+            ' · one-time entry, non-refundable once the phase opens.</div>' +
 
           '<div style="flex:none;background:#fff;border:1px solid var(--n-12);border-radius:14px;overflow:hidden">' +
             '<div style="display:flex;align-items:flex-end;justify-content:space-between;padding:18px 18px 16px">' +
@@ -268,7 +274,7 @@
             '<div style="padding:14px 18px;border-top:1px solid var(--n-07);display:flex;flex-direction:column;gap:11px">' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
                 '<div style="display:flex;align-items:center;gap:9px"><div style="width:9px;height:9px;border-radius:2px;background:var(--green)"></div>' +
-                '<div style="font:400 12.5px/1 var(--sans)">To the Westside prize pot</div></div>' +
+                '<div style="font:400 12.5px/1 var(--sans)">To the game prize pot</div></div>' +
                 '<div style="font:600 12.5px/1 var(--sans)">$20.00</div>' +
               '</div>' +
               '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -285,8 +291,8 @@
           '<div class="mono-label">PAY WITH</div>' +
           '<div style="display:flex;flex-direction:column;gap:7px">' +
             method({ key: 'apple', name: 'Apple Pay', note: 'FASTEST · FACE ID' }) +
-            method({ key: 'card', name: 'Card · Visa ···· 4417', note: 'SAVED' }) +
-            method({ key: 'venmo', name: 'Venmo', note: '@MAYA-OKONKWO' }) +
+            method({ key: 'card', name: 'Card', note: 'ADD A CARD' }) +
+            method({ key: 'venmo', name: 'Venmo', note: 'CONNECT ACCOUNT' }) +
             '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:1px dashed rgba(22,37,107,.22)" data-action="add-payment">' +
               '<div style="width:36px;height:25px;border-radius:5px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 15px/1 var(--sans);color:var(--n-45)">+</div>' +
               '<div style="flex:1"><div style="font:600 13px/1.2 var(--sans);color:var(--n-70)">Google Pay, PayPal, Cash App, new card</div></div>' +

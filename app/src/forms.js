@@ -30,11 +30,29 @@
   // which is what keeps the home screen free of invented names and teams.
 
   S.session = {
-    game: null,     // { code } once the entry fee is paid
-    team: null,     // { name, color } once they join or create one
-    featured: null, // hit of the day — nothing until a clip is approved
-    topTeams: [],   // standings preview
-    topPlayer: null
+    game: null,      // { code } once the entry fee is paid
+    team: null,      // { name, color } once they join or create one
+    featured: null,  // hit of the day — nothing until a clip is approved
+    topTeams: [],    // standings preview
+    topPlayer: null,
+    tagged: null,    // who they picked in step 2 of the capture flow
+    pending: null,   // a submission of theirs awaiting review
+    incoming: null,  // someone else's claim against them
+    clips: []        // their own approved clips
+  };
+
+  // The signed-in player, built from what they entered at sign up.
+  S.me = function () {
+    var s = S.formState.signup;
+    var name = (s.first + ' ' + s.last).trim();
+    return {
+      name: name,
+      hasName: name !== '',
+      grade: s.grade,
+      team: S.session.team,
+      elims: 0,
+      soaked: 0
+    };
   };
 
   S.resetSession = function () {
@@ -43,6 +61,10 @@
     S.session.featured = null;
     S.session.topTeams = [];
     S.session.topPlayer = null;
+    S.session.tagged = null;
+    S.session.pending = null;
+    S.session.incoming = null;
+    S.session.clips = [];
   };
 
   function get(path) {

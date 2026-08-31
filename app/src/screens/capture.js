@@ -46,11 +46,13 @@
   S.screens.tag = {
     id: 'tag', code: '1c', label: 'Tag',
     render: function () {
-      var filters = ['All teams', 'Undertow', 'Kraken', 'Tide'].map(function (f, i) {
-        return i === 0
-          ? '<div style="padding:7px 12px;border-radius:99px;background:var(--navy);color:var(--cream);font:500 11px/1 var(--sans)">' + f + '</div>'
-          : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + f + '</div>';
-      }).join('');
+      // Team filters come from the teams actually in the game.
+      var filters = ['All teams'].concat(S.data.teams.map(function (t) { return t.name; }))
+        .map(function (f, i) {
+          return i === 0
+            ? '<div style="padding:7px 12px;border-radius:99px;background:var(--navy);color:var(--cream);font:500 11px/1 var(--sans)">' + S.esc(f) + '</div>'
+            : '<div style="padding:7px 12px;border-radius:99px;border:1px solid var(--n-18);font:500 11px/1 var(--sans)">' + S.esc(f) + '</div>';
+        }).join('');
 
       var q = S.formState.search.tag.trim().toLowerCase();
       var targets = S.data.targets.filter(function (t) {
@@ -92,13 +94,13 @@
               '<div style="font:400 10.5px/1 var(--mono);color:var(--green);margin-top:6px">VIDEO UPLOADING · 62%</div></div>' +
           '</div>' +
           '<div class="field-line" style="background:#F1EEE4;border-color:var(--n-12)">' +
-            S.forms.input({ bind: 'search.tag', placeholder: 'Search 41 players in this game', live: true }) +
+            S.forms.input({ bind: 'search.tag', placeholder: 'Search players in this game', live: true }) +
           '</div>' +
           '<div style="display:flex;gap:7px;margin-top:12px">' + filters + '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:8px">' +
-          (list || '<div class="empty">No players match “' + S.esc(S.formState.search.tag) + '”.</div>') +
+          (list || '<div class="empty">' + (S.data.targets.length ? 'No players match “' + S.esc(S.formState.search.tag) + '”.' : 'Nobody to tag yet — no other players have joined this game.') + '</div>') +
         '</div>' +
 
         '<div style="padding:12px 20px 34px;background:#fff;border-top:1px solid var(--n-10)">' +
@@ -118,6 +120,10 @@
           '<span style="color:var(--n-55)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
       }
 
+      // Whoever was picked in step 2. Nothing invented if nobody was.
+      var tag = S.session.tagged;
+      if (tag) tag.first = tag.name.split(' ')[0];
+
       return '<div class="screen">' +
         '<div style="padding:56px 20px 12px;display:flex;align-items:center;justify-content:space-between">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--n-55)" data-go="tag">Back</div>' +
@@ -127,7 +133,10 @@
 
         '<div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:14px">' +
           '<div style="font:700 27px/1.15 var(--serif)">Check it, then send it in</div>' +
-          '<div style="font:400 12.5px/1.45 var(--sans);color:var(--n-60);margin-top:-4px">Ty says whether he got hit. If he denies it, an admin watches the video and decides.</div>' +
+          '<div style="font:400 12.5px/1.45 var(--sans);color:var(--n-60);margin-top:-4px">' +
+            (tag ? S.esc(tag.first) + ' says whether they got hit. If they deny it, an admin watches the video and decides.'
+                 : 'Whoever you tagged says whether they got hit. If they deny it, an admin watches the video and decides.') +
+          '</div>' +
 
           '<div style="border-radius:14px;overflow:hidden;border:1px solid var(--n-12);background:#fff">' +
             '<div class="hatch-vid-lg" style="height:212px;position:relative">' +
@@ -141,15 +150,15 @@
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:14px 15px;display:flex;flex-direction:column;gap:11px">' +
-            line('Who you hit', 'Ty Brennan · Undertow') +
-            line('Time of hit', 'Today, 4:52 PM') +
-            line('Goes to', 'Ty, then admin if denied') +
+            line('Who you hit', tag ? S.esc(tag.name) + (tag.team ? ' · ' + S.esc(tag.team) : '') : 'Not tagged yet') +
+            line('Time of hit', 'Now') +
+            line('Goes to', tag ? S.esc(tag.first) + ', then admin if denied' : 'Them, then admin if denied') +
             line('Visible to', 'Game participants') +
           '</div>' +
 
           '<div style="display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(255,181,36,.14);border:1px solid rgba(255,181,36,.45)">' +
             '<div style="width:16px;height:16px;border-radius:4px;background:var(--gold);flex:none;margin-top:1px"></div>' +
-            '<div style="font:400 12px/1.45 var(--sans);color:var(--gold-ink-soft)">Trim or re-edit as much as you like before sending. If Ty confirms the hit he’s out straight away. If he denies it, an admin makes the call.</div>' +
+            '<div style="font:400 12px/1.45 var(--sans);color:var(--gold-ink-soft)">Trim or re-edit as much as you like before sending. If they confirm the hit they’re out straight away. If they deny it, an admin makes the call.</div>' +
           '</div>' +
         '</div>' +
 
@@ -179,6 +188,27 @@
         '</div>';
       }
 
+      var p = S.session.pending;
+
+      // Nothing submitted yet — no invented player, no fake timeline.
+      if (!p) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 18px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="hits">‹ Activity</div>' +
+            '<div style="font:700 28px/1.15 var(--serif);margin-top:18px">My hits</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">NOTHING SUBMITTED</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:14px">' +
+            '<div class="card"><div class="empty">You haven’t submitted a hit yet. Record one and its review status shows up here.</div></div>' +
+          '</div>' +
+          '<div style="padding:12px 20px 12px">' +
+            '<button class="cta" style="height:52px" data-go="camera">RECORD A HIT</button>' +
+          '</div>' +
+          S.tabBar('home') +
+        '</div>';
+      }
+
+      var first = p.target.split(' ')[0];
       return '<div class="screen">' +
         '<div style="padding:56px 20px 18px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
           '<div style="font:500 13px/1 var(--sans);color:var(--c-60)" data-go="hits">‹ Activity</div>' +
@@ -186,8 +216,8 @@
             '<div style="width:6px;height:6px;border-radius:50%;background:var(--gold)"></div>' +
             '<div style="font:500 10px/1 var(--mono);letter-spacing:.12em;color:var(--gold-light)">UNDER REVIEW</div>' +
           '</div>' +
-          '<div style="font:700 28px/1.15 var(--serif);margin-top:14px">You → Ty Brennan</div>' +
-          '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">SUBMITTED TODAY, 4:53 PM · #S-2841</div>' +
+          '<div style="font:700 28px/1.15 var(--serif);margin-top:14px">You → ' + S.esc(p.target) + '</div>' +
+          '<div style="font:400 11px/1 var(--mono);color:var(--c-55);margin-top:8px">SUBMITTED ' + S.esc(p.at) + '</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:14px">' +
@@ -197,10 +227,10 @@
           '</div>' +
           '<div class="mono-label">TIMELINE</div>' +
           '<div style="display:flex;flex-direction:column;gap:0">' +
-            step({ dot: 'var(--green)', title: 'Submitted', note: '4:53 PM · VIDEO VERIFIED ON SERVER', mono: true }) +
+            step({ dot: 'var(--green)', title: 'Submitted', note: 'VIDEO VERIFIED ON SERVER', mono: true }) +
             step({ dot: 'var(--green)', title: 'Eligibility checks passed', note: 'Different teams · target alive · phase active' }) +
-            step({ dot: 'var(--gold)', title: 'Sent to Ty Brennan to confirm', note: 'If he denies it, an admin reviews · auto-confirms in 21h 40m' }) +
-            step({ dot: 'rgba(22,37,107,.18)', title: 'Ty eliminated', note: 'PENDING', mono: true, pending: true, last: true }) +
+            step({ dot: 'var(--gold)', title: 'Sent to ' + S.esc(p.target) + ' to confirm', note: 'If they deny it, an admin reviews' }) +
+            step({ dot: 'rgba(22,37,107,.18)', title: S.esc(first) + ' eliminated', note: 'PENDING', mono: true, pending: true, last: true }) +
           '</div>' +
         '</div>' +
 
@@ -224,11 +254,29 @@
           '<span style="color:var(--n-55)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
       }
 
+      var claim = S.session.incoming;
+
+      // Nobody has claimed a hit on you — nothing to confirm or deny.
+      if (!claim) {
+        return '<div class="screen">' +
+          '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--navy),var(--navy-bright));color:var(--cream)">' +
+            '<div style="font:400 10px/1 var(--mono);letter-spacing:.14em;color:var(--c-80)">CLAIMS AGAINST YOU</div>' +
+            '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Nobody’s got you</div>' +
+            '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">NOTHING TO ANSWER</div>' +
+          '</div>' +
+          '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
+            '<div class="card"><div class="empty">When someone claims they soaked you, their clip lands here and you confirm or deny it.</div></div>' +
+          '</div>' +
+          S.tabBar('home') +
+        '</div>';
+      }
+
+      var by = claim.by.split(' ')[0];
       return '<div class="screen">' +
         '<div style="padding:56px 20px 20px;background:linear-gradient(120deg,var(--red),var(--orange));color:var(--cream)">' +
           '<div style="font:400 10px/1 var(--mono);letter-spacing:.14em;color:var(--c-80)">SOMEONE SAYS THEY GOT YOU</div>' +
-          '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Did Maya soak you?</div>' +
-          '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">TAGGED 6 MIN AGO · YOU HAVE 22H TO ANSWER</div>' +
+          '<div style="font:700 30px/1.1 var(--serif);margin-top:14px">Did ' + S.esc(by) + ' soak you?</div>' +
+          '<div style="font:400 11px/1 var(--mono);color:var(--c-75);margin-top:10px">YOU HAVE 22H TO ANSWER</div>' +
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:13px">' +
@@ -238,9 +286,9 @@
           '</div>' +
 
           '<div style="background:#fff;border:1px solid var(--n-10);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:10px">' +
-            line('Claimed by', 'Maya Okonkwo · Riptide') +
-            line('When', 'Today, 4:52 PM') +
-            line('Counts toward', 'Riptide, phase 3') +
+            line('Claimed by', S.esc(claim.by) + (claim.team ? ' · ' + S.esc(claim.team) : '')) +
+            line('When', S.esc(claim.at)) +
+            line('Counts toward', claim.team ? S.esc(claim.team) : 'Their team') +
           '</div>' +
 
           '<div style="display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--n-05)">' +
@@ -250,7 +298,7 @@
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;flex-direction:column;gap:9px">' +
-          '<button class="cta cta--red" data-go="leaderboard">YEAH, SHE GOT ME</button>' +
+          '<button class="cta cta--red" data-go="leaderboard">YEAH, THEY GOT ME</button>' +
           '<div style="height:52px;border-radius:12px;background:#fff;border:1px solid var(--n-25);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-go="home">No — send it to an admin</div>' +
         '</div>' +
         S.tabBar('home') +
