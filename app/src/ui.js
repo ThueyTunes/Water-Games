@@ -105,3 +105,32 @@ window.S = window.S || {};
     '</div>';
   };
 })(window.S);
+
+/* Transient in-device notice. Used for actions that genuinely do something
+   (message sent, code filled) and, honestly labelled, for the screens the
+   design brief lists as still undrawn. */
+(function (S) {
+  'use strict';
+  var timer = null;
+
+  S.toast = function (msg, kind) {
+    var host = document.querySelector('.focus-stage .ios-device') ||
+               document.querySelector('.ios-device');
+    if (!host) return;
+
+    var old = host.querySelector('.toast');
+    if (old) old.remove();
+    clearTimeout(timer);
+
+    var el = document.createElement('div');
+    el.className = 'toast' + (kind === 'todo' ? ' toast--todo' : '');
+    el.textContent = msg;
+    host.appendChild(el);
+    // next frame, so the transition runs
+    requestAnimationFrame(function () { el.classList.add('is-in'); });
+    timer = setTimeout(function () {
+      el.classList.remove('is-in');
+      setTimeout(function () { el.remove(); }, 260);
+    }, 2600);
+  };
+})(window.S);

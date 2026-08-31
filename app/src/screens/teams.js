@@ -79,7 +79,7 @@
       }).join('');
 
       var slots = [0, 1, 2, 3].map(function () {
-        return '<div style="width:34px;height:34px;border-radius:50%;border:1px dashed var(--n-30);display:flex;align-items:center;justify-content:center;font:400 14px/1 var(--sans);color:var(--n-35)">+</div>';
+        return '<div style="width:34px;height:34px;border-radius:50%;border:1px dashed var(--n-30);display:flex;align-items:center;justify-content:center;font:400 14px/1 var(--sans);color:var(--n-35)" data-action="invite">+</div>';
       }).join('');
 
       return '<div class="screen">' +
@@ -340,7 +340,7 @@
 
         '<div style="padding:12px 20px 12px;display:flex;gap:10px">' +
           '<button class="cta" style="flex:1;height:52px;font-size:13.5px;letter-spacing:.08em" data-go="camera">RECORD A HIT</button>' +
-          '<div style="width:52px;height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:400 9px/1.2 var(--mono);text-align:center;color:var(--n-60)">RE<br/>PORT</div>' +
+          '<div style="width:52px;height:52px;border-radius:12px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:400 9px/1.2 var(--mono);text-align:center;color:var(--n-60)" data-action="report">RE<br/>PORT</div>' +
         '</div>' +
         S.tabBar('participants') +
       '</div>';

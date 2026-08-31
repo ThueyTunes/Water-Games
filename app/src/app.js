@@ -110,26 +110,92 @@
 
   S.go = go; // deep-linking + testing entry point
 
+  /* ---- actions ----------------------------------------------------------- */
+  // Every interactive control routes through here. Anything the design brief
+  // lists as still undrawn says so plainly rather than doing nothing.
+
+  var TODO = {
+    'scan-qr': 'Camera QR scanning isn\'t built yet — type the six-character code instead.',
+    'notifications': 'Notifications aren\'t built yet — the brief lists them as undrawn.',
+    'report': 'Reporting and moderation aren\'t built yet.',
+    'message-admin': 'Admin messaging isn\'t built yet — the review queue is still undrawn.',
+    'receipts': 'Payments & receipts history isn\'t built yet.',
+    'rules': 'The phase-3 rules screen lives in the other design file, not this one.',
+    'invite': 'Roster invites aren\'t built yet.',
+    'share': 'Sharing outside the app isn\'t built yet.',
+    'trim': 'Video trimming isn\'t built yet — the clip is a placeholder.',
+    'forgot': 'Password reset isn\'t built yet.',
+    'sso': 'Apple / Google sign-in needs an identity provider that isn\'t wired up.',
+    'add-payment': 'Adding a new payment method needs a payment processor that isn\'t wired up.'
+  };
+
+  function runAction(name, el) {
+    var fs = S.formState;
+
+    if (TODO[name]) { S.toast(TODO[name], 'todo'); return; }
+
+    switch (name) {
+      case 'request-code':
+      case 'resend-code':
+        S.otp.request(fs.signup.phone).then(function (r) {
+          if (r.ok) { fs.verify.code = ''; go('verify'); } else render();
+        });
+        return;
+
+      case 'verify-code':
+        S.otp.verify(fs.verify.code).then(function (r) {
+          if (r.ok) go('join'); else render();
+        });
+        return;
+
+      // Browsing the open game fills the code rather than skipping the step.
+      case 'fill-game-code':
+        fs.join.code = 'NVH26X';
+        render();
+        S.toast('Game code filled in for Westside Soak ’26.');
+        return;
+
+      case 'send-message': {
+        var text = fs.chat.draft.trim();
+        if (!text) { S.toast('Type something first.'); return; }
+        fs.chat.sent.push(text);
+        fs.chat.draft = '';
+        render();
+        var body = root.querySelector('[data-chat-scroll]');
+        if (body) body.scrollTop = body.scrollHeight;
+        return;
+      }
+
+      case 'flip-lens':
+        fs.camera.lens = fs.camera.lens === 'REAR' ? 'FRONT' : 'REAR';
+        render();
+        S.toast(fs.camera.lens === 'REAR' ? 'Rear lens' : 'Front lens');
+        return;
+
+      case 'withdraw':
+        S.toast('Submission #S-2841 withdrawn.');
+        setTimeout(function () { go('home'); }, 900);
+        return;
+
+      case 'logout':
+        S.otp.reset();
+        fs.signup = { phone: '', first: '', last: '', password: '', grade: '', agree: false, showPw: false };
+        fs.signin = { phone: '', password: '', showPw: false };
+        fs.verify = { code: '' };
+        go('signin');
+        return;
+
+      case 'signin':
+        go('home');
+        return;
+    }
+  }
+
   /* ---- events ----------------------------------------------------------- */
 
   function onClick(e) {
-    // One-time-code actions resolve async, then repaint.
     var act = e.target.closest('[data-action]');
-    if (act) {
-      var name = act.getAttribute('data-action');
-      if (name === 'request-code' || name === 'resend-code') {
-        S.otp.request(S.formState.signup.phone).then(function (r) {
-          if (r.ok) { S.formState.verify.code = ''; go('verify'); }
-          else render();
-        });
-      } else if (name === 'verify-code') {
-        S.otp.verify(S.formState.verify.code).then(function (r) {
-          if (r.ok) go('join');
-          else render();
-        });
-      }
-      return;
-    }
+    if (act) { runAction(act.getAttribute('data-action'), act); return; }
 
     var nav = e.target.closest('[data-nav]');
     if (nav) {
@@ -151,6 +217,14 @@
   }
 
   function onKey(e) {
+    // Enter inside a field that declares an action fires it (chat send).
+    if (e.key === 'Enter' && e.target.getAttribute && e.target.getAttribute('data-enter')) {
+      e.preventDefault();
+      runAction(e.target.getAttribute('data-enter'), e.target);
+      return;
+    }
+    // Don't hijack arrow keys while someone is typing.
+    if (e.target.tagName === 'INPUT') return;
     if (!current) return;
     if (e.key === 'ArrowRight') step(1);
     else if (e.key === 'ArrowLeft') step(-1);

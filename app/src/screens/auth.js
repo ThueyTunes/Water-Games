@@ -153,10 +153,10 @@
                 '<div class="reveal" data-reveal="signin.showPw">SHOW</div>' +
               '</div>' +
             '</div>' +
-            '<div style="text-align:right;font:500 12px/1 var(--sans);color:var(--gold-light);margin-top:2px">Forgot password?</div>' +
+            '<div style="text-align:right;font:500 12px/1 var(--sans);color:var(--gold-light);margin-top:2px" data-action="forgot">Forgot password?</div>' +
           '</div>' +
 
-          '<button class="cta" style="margin-top:20px" data-cta="signin" data-go="home">SIGN IN</button>' +
+          '<button class="cta" style="margin-top:20px" data-cta="signin" data-action="signin">SIGN IN</button>' +
 
           '<div style="display:flex;align-items:center;gap:11px;margin:24px 0 16px">' +
             '<div style="flex:1;height:1px;background:rgba(252,247,234,.16)"></div>' +
@@ -164,11 +164,11 @@
             '<div style="flex:1;height:1px;background:rgba(252,247,234,.16)"></div>' +
           '</div>' +
           '<div style="display:flex;gap:10px">' +
-            '<div style="flex:1;height:50px;border-radius:11px;border:1px solid var(--c-22);display:flex;align-items:center;justify-content:center;gap:9px">' +
+            '<div style="flex:1;height:50px;border-radius:11px;border:1px solid var(--c-22);display:flex;align-items:center;justify-content:center;gap:9px" data-action="sso">' +
               '<div style="width:16px;height:16px;border-radius:3px;background:var(--c-75)"></div>' +
               '<div style="font:600 12.5px/1 var(--sans)">Apple</div>' +
             '</div>' +
-            '<div style="flex:1;height:50px;border-radius:11px;border:1px solid var(--c-22);display:flex;align-items:center;justify-content:center;gap:9px">' +
+            '<div style="flex:1;height:50px;border-radius:11px;border:1px solid var(--c-22);display:flex;align-items:center;justify-content:center;gap:9px" data-action="sso">' +
               '<div style="width:16px;height:16px;border-radius:50%;background:var(--c-75)"></div>' +
               '<div style="font:600 12.5px/1 var(--sans)">Google</div>' +
             '</div>' +
@@ -198,7 +198,7 @@
           '<div style="font:400 13.5px/1.55 var(--sans);color:var(--n-60);margin-top:12px">Whoever runs your game hands these out. Six characters, not case sensitive.</div>' +
           '<div style="margin-top:26px">' + boxes + '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;margin-top:24px;padding:14px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
+          '<div style="display:flex;align-items:center;gap:12px;margin-top:24px;padding:14px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="scan-qr">' +
             '<div class="hatch-qr" style="width:46px;height:46px;border-radius:8px"></div>' +
             '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Scan a QR instead</div>' +
               '<div style="font:400 11px/1.35 var(--sans);color:var(--n-55);margin-top:4px">Whoever set the game up has one</div></div>' +
@@ -211,7 +211,7 @@
             '<div style="flex:1;height:1px;background:var(--n-14)"></div>' +
           '</div>' +
 
-          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
+          '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="fill-game-code">' +
             '<div class="team-bar" style="background:var(--navy)"></div>' +
             '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">Westside Soak \'26</div>' +
               '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">REGISTRATION OPEN · 41 JOINED · $25</div></div>' +
@@ -287,7 +287,7 @@
             method({ key: 'apple', name: 'Apple Pay', note: 'FASTEST · FACE ID' }) +
             method({ key: 'card', name: 'Card · Visa ···· 4417', note: 'SAVED' }) +
             method({ key: 'venmo', name: 'Venmo', note: '@MAYA-OKONKWO' }) +
-            '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:1px dashed rgba(22,37,107,.22)">' +
+            '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:1px dashed rgba(22,37,107,.22)" data-action="add-payment">' +
               '<div style="width:36px;height:25px;border-radius:5px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:600 15px/1 var(--sans);color:var(--n-45)">+</div>' +
               '<div style="flex:1"><div style="font:600 13px/1.2 var(--sans);color:var(--n-70)">Google Pay, PayPal, Cash App, new card</div></div>' +
               '<div style="font:400 16px/1;color:var(--n-30)">›</div>' +

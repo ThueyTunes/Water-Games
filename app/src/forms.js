@@ -8,19 +8,21 @@
   'use strict';
 
   /* ---- state ------------------------------------------------------------ */
-  // Seeded with the mockups' own placeholder values so the gallery still reads
-  // as the design; every field is editable and clearable.
+  // Every text field starts empty so people enter their own details. Greyed
+  // placeholder text carries the hint the mockup's dummy values used to.
 
   S.formState = {
-    signup:  { phone: '4155550182', first: 'Maya', last: 'Okonkwo', password: 'watergame',
-               grade: '12th', agree: true, showPw: false },
-    verify:  { code: '4179' },
-    signin:  { phone: '4155550182', password: 'watergame', showPw: false },
-    join:    { code: 'NVH2' },
+    signup:  { phone: '', first: '', last: '', password: '',
+               grade: '', agree: false, showPw: false },
+    verify:  { code: '' },
+    signin:  { phone: '', password: '', showPw: false },
+    join:    { code: '' },
     payment: { method: 'apple' },
-    newteam: { name: 'Breakwater', color: '#F0A500' },
+    newteam: { name: '', color: '#F0A500' },
     filters: { participants: 'Everyone', hits: 'All approved', leaderboard: 'Players', standings: 'Teams' },
-    search:  { participants: '', tag: '', teams: '' }
+    search:  { participants: '', tag: '', teams: '' },
+    chat:    { draft: '', sent: [] },
+    camera:  { lens: 'REAR' }
   };
 
   function get(path) {
@@ -72,6 +74,7 @@
       (o.format ? ' data-format="' + o.format + '"' : '') +
       ' value="' + S.esc(v) + '"' +
       (o.live ? ' data-live="1"' : '') +
+      (o.enter ? ' data-enter="' + o.enter + '"' : '') +
       (o.placeholder ? ' placeholder="' + S.esc(o.placeholder) + '"' : '') +
       (o.maxlength ? ' maxlength="' + o.maxlength + '"' : '') +
       (o.inputmode ? ' inputmode="' + o.inputmode + '"' : '') +

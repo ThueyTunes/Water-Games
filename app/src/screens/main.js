@@ -99,7 +99,7 @@
         var rows = items.map(function (it, i) {
           return '<div style="display:flex;align-items:center;gap:12px;padding:13px 15px;' +
               (i < items.length - 1 ? 'border-bottom:1px solid var(--n-07)' : '') + '"' +
-              (it.go ? ' data-go="' + it.go + '"' : '') + '>' +
+              ((it.go ? ' data-go="' + it.go + '"' : (it.act ? ' data-action="' + it.act + '"' : ''))) + '>' +
             '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">' + it.title + '</div>' +
               (it.note ? '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + it.note + '</div>' : '') +
             '</div><div style="font:400 16px/1;color:var(--n-30)">›</div>' +
@@ -126,16 +126,16 @@
             { title: 'Create a team', note: '$5 · YOU BECOME CAPTAIN', go: 'newteam' }
           ]) +
           group('GAME', [
-            { title: 'Rules', note: 'PHASE 3 · QUOTA 3' },
+            { title: "Rules", note: "PHASE 3 · QUOTA 3", act: "rules" },
             { title: 'Join another game', note: 'ENTER A GAME CODE', go: 'join' },
-            { title: 'Payments &amp; receipts', note: '$25 ENTRY · $5 TEAM', go: 'payment' }
+            { title: "Payments &amp; receipts", note: " ENTRY ·  TEAM", act: "receipts" }
           ]) +
           group('ACCOUNT', [
             { title: 'Profile &amp; photo', go: 'profile' },
-            { title: 'Notifications', note: '4 UNREAD' },
-            { title: 'Report a player or clip' }
+            { title: "Notifications", note: "4 UNREAD", act: "notifications" },
+            { title: "Report a player or clip", act: "report" }
           ]) +
-          '<div style="flex:none;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:#fff;border:1px solid rgba(232,51,42,.45);font:600 13px/1 var(--sans);color:var(--red);margin-top:2px" data-go="signin">Log out</div>' +
+          '<div style="flex:none;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:#fff;border:1px solid rgba(232,51,42,.45);font:600 13px/1 var(--sans);color:var(--red);margin-top:2px" data-action="logout">Log out</div>' +
         '</div>' +
         S.tabBar('home') +
       '</div>';
@@ -191,7 +191,7 @@
           '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>' +
           (shown.length ? '' : '<div class="empty">No approved clips in this filter yet.</div>') +
 
-          '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
+          '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)" data-action="share">' +
             '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
             '<div style="flex:1"><div style="font:500 12px/1.35 var(--sans)">Your clip is live — 128 views</div>' +
               '<div style="font:400 10px/1 var(--mono);color:var(--n-50);margin-top:5px">TAP TO SHARE OUTSIDE THE APP</div></div>' +
@@ -216,6 +216,12 @@
         '</div>';
       }
 
+      function mine(text) {
+        return '<div style="display:flex;justify-content:flex-end">' +
+          '<div style="max-width:250px;padding:10px 13px;border-radius:14px 14px 4px 14px;background:var(--navy);color:var(--cream);font:400 13px/1.45 var(--sans)">' + text + '</div>' +
+        '</div>';
+      }
+
       var faces = [0, 1, 2].map(function (i) {
         return '<div class="hatch-av" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--green);' +
           (i ? 'margin-left:-9px' : '') + '"></div>';
@@ -229,13 +235,12 @@
           '<div style="display:flex" data-go="team">' + faces + '</div>' +
         '</div>' +
 
-        '<div style="flex:1;overflow:hidden;padding:16px 18px 0;display:flex;flex-direction:column;gap:11px">' +
+        '<div style="flex:1;overflow:auto;padding:16px 18px 0;display:flex;flex-direction:column;gap:11px" data-chat-scroll>' +
           '<div style="text-align:center;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-40)">TODAY</div>' +
           theirs('MAYA · CAPTAIN', 'Ty walks to the Safeway at 4:45 every day. I\'ve got him. Somebody take Priya.') +
           theirs('DESHAWN', 'On it. She\'s at practice till 6.') +
-          '<div style="display:flex;justify-content:flex-end">' +
-            '<div style="max-width:250px;padding:10px 13px;border-radius:14px 14px 4px 14px;background:var(--navy);color:var(--cream);font:400 13px/1.45 var(--sans)">One more and we clear the phase. Don\'t get caught in a car.</div>' +
-          '</div>' +
+          mine('One more and we clear the phase. Don\'t get caught in a car.') +
+          S.formState.chat.sent.map(function (m) { return mine(S.esc(m)); }).join('') +
           '<div style="display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:12px;background:rgba(232,51,42,.1);border:1px solid rgba(232,51,42,.35)">' +
             '<div style="width:13px;height:13px;border-radius:3px;background:var(--red);flex:none"></div>' +
             '<div style="font:400 11.5px/1.45 var(--sans);color:var(--red-ink)">Ana was eliminated 1 hr ago — she can still read the chat but can\'t post.</div>' +
@@ -243,8 +248,10 @@
         '</div>' +
 
         '<div style="padding:10px 18px 0;display:flex;gap:9px;align-items:center">' +
-          '<div style="flex:1;height:46px;border-radius:23px;background:#fff;border:1px solid rgba(22,37,107,.15);display:flex;align-items:center;padding:0 16px;font:400 13.5px/1 var(--sans);color:var(--n-45)">Message Riptide</div>' +
-          '<div style="width:46px;height:46px;border-radius:50%;background:var(--gold)"></div>' +
+          '<div style="flex:1;height:46px;border-radius:23px;background:#fff;border:1px solid rgba(22,37,107,.15);display:flex;align-items:center;padding:0 16px">' +
+            S.forms.input({ bind: 'chat.draft', placeholder: 'Message Riptide', cls: 'inp--chat', enter: 'send-message' }) +
+          '</div>' +
+          '<div style="width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font:700 17px/1 var(--sans);color:var(--navy);flex:none" data-action="send-message">↑</div>' +
         '</div>' +
         S.tabBar('chat') +
       '</div>';

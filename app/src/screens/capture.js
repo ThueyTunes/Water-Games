@@ -12,7 +12,7 @@
     render: function () {
       return '<div style="height:100%;position:relative;background:#0C1220;font-family:var(--sans);color:var(--cream)">' +
         '<div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,#22306E 0 8px,#1A2657 8px 16px)"></div>' +
-        '<div style="position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;font:400 11px/1.6 var(--mono);color:var(--c-40)">CAMERA PREVIEW<br/>live capture, rear lens</div>' +
+        '<div style="position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;font:400 11px/1.6 var(--mono);color:var(--c-40)">CAMERA PREVIEW<br/>live capture, ' + S.formState.camera.lens.toLowerCase() + ' lens</div>' +
 
         '<div style="position:absolute;top:56px;left:20px;right:20px;display:flex;align-items:center;justify-content:space-between">' +
           '<div style="display:flex;align-items:center;gap:9px;padding:8px 13px;border-radius:99px;background:rgba(12,18,32,.72);backdrop-filter:blur(8px)">' +
@@ -31,11 +31,11 @@
         '</div>' +
 
         '<div style="position:absolute;left:0;right:0;bottom:0;padding:0 20px 40px;display:flex;align-items:center;justify-content:space-between">' +
-          '<div style="width:52px;height:52px;border-radius:11px;background:var(--c-12);display:flex;align-items:center;justify-content:center;font:400 9px/1.3 var(--mono);text-align:center;color:var(--c-70)">FROM<br/>ROLL</div>' +
+          '<div style="width:52px;height:52px;border-radius:11px;background:var(--c-12);display:flex;align-items:center;justify-content:center;font:400 9px/1.3 var(--mono);text-align:center;color:var(--c-70)" data-go="tag">FROM<br/>ROLL</div>' +
           '<div style="width:86px;height:86px;border-radius:50%;border:4px solid rgba(252,247,234,.85);display:flex;align-items:center;justify-content:center" data-go="tag">' +
             '<div style="width:62px;height:62px;border-radius:16px;background:var(--red)"></div>' +
           '</div>' +
-          '<div style="width:52px;height:52px;border-radius:11px;background:var(--c-12);display:flex;align-items:center;justify-content:center;font:400 9px/1.3 var(--mono);text-align:center;color:var(--c-70)">FLIP</div>' +
+          '<div style="width:52px;height:52px;border-radius:11px;background:var(--c-12);display:flex;align-items:center;justify-content:center;font:400 9px/1.3 var(--mono);text-align:center;color:var(--c-70)" data-action="flip-lens">FLIP</div>' +
         '</div>' +
       '</div>';
     }
@@ -127,7 +127,7 @@
             '</div>' +
             '<div style="display:flex;gap:10px;padding:12px">' +
               '<div style="flex:1;height:38px;border-radius:9px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--sans)" data-go="camera">Retake</div>' +
-              '<div style="flex:1;height:38px;border-radius:9px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--sans)">Trim</div>' +
+              '<div style="flex:1;height:38px;border-radius:9px;border:1px solid var(--n-20);display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--sans)" data-action="trim">Trim</div>' +
             '</div>' +
           '</div>' +
 
@@ -196,8 +196,8 @@
         '</div>' +
 
         '<div style="padding:12px 20px 12px;display:flex;gap:10px">' +
-          '<div style="flex:1;height:52px;border-radius:12px;border:1px solid rgba(232,51,42,.5);color:var(--red);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)">Withdraw</div>' +
-          '<div style="flex:1.4;height:52px;border-radius:12px;background:var(--navy);color:var(--cream);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)">Message admin</div>' +
+          '<div style="flex:1;height:52px;border-radius:12px;border:1px solid rgba(232,51,42,.5);color:var(--red);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-action="withdraw">Withdraw</div>' +
+          '<div style="flex:1.4;height:52px;border-radius:12px;background:var(--navy);color:var(--cream);display:flex;align-items:center;justify-content:center;font:600 13px/1 var(--sans)" data-action="message-admin">Message admin</div>' +
         '</div>' +
         S.tabBar('home') +
       '</div>';
