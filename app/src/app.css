@@ -1,0 +1,409 @@
+/* ==========================================================================
+   Soaked — implementation of `Soaked App Mockups.dc.html`
+   Every value here is carried over from the mockup source.
+   ========================================================================== */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  font-family: var(--sans);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Shell chrome (gallery + focus view) --------------------------- */
+
+.shell-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--navy);
+  color: var(--cream);
+  border-bottom: 1px solid rgba(0, 0, 0, .2);
+}
+
+.shell-bar__brand {
+  font: 700 18px/1 var(--serif);
+  letter-spacing: .04em;
+}
+
+.shell-bar__sub {
+  font: 400 10px/1 var(--mono);
+  letter-spacing: .12em;
+  color: var(--c-55);
+}
+
+.shell-bar__spacer { flex: 1; }
+
+.shell-btn {
+  appearance: none;
+  border: 1px solid var(--c-22);
+  background: transparent;
+  color: var(--cream);
+  font: 500 11px/1 var(--mono);
+  letter-spacing: .08em;
+  padding: 8px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.shell-btn:hover { border-color: var(--gold); color: var(--gold); }
+.shell-btn[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 44px 34px;
+  padding: 36px 44px 80px;
+  align-items: flex-start;
+}
+
+.gallery__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-margin-top: 80px;
+}
+
+.gallery__label {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font: 400 11px/1.3 var(--sans);
+  color: var(--n-60);
+}
+
+.gallery__id {
+  font: 600 10.5px/1 var(--mono);
+  padding: 3px 7px;
+  background: var(--n-10);
+  color: var(--navy);
+  border-radius: 5px;
+  text-decoration: none;
+}
+.gallery__item:target .gallery__id,
+.gallery__item.is-active .gallery__id { background: var(--red); color: #fff; }
+
+.focus-stage {
+  display: flex;
+  justify-content: center;
+  padding: 40px 24px 80px;
+}
+
+/* ---------- iOS device frame (port of ios-frame.jsx) ---------------------- */
+
+.ios-device {
+  width: var(--device-w);
+  height: var(--device-h);
+  border-radius: var(--device-radius);
+  overflow: hidden;
+  position: relative;
+  background: #F2F2F7;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, .18), 0 0 0 1px rgba(0, 0, 0, .12);
+  font-family: -apple-system, system-ui, sans-serif;
+  flex: none;
+}
+.ios-device--dark { background: #000; }
+
+.ios-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  border-radius: 24px;
+  background: #000;
+  z-index: 50;
+}
+
+.ios-statusbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  gap: 154px;
+  align-items: center;
+  justify-content: center;
+  padding: 21px 24px 19px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.ios-statusbar__time {
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1.5px;
+  font: 590 17px/22px -apple-system, 'SF Pro', system-ui;
+  color: #000;
+}
+
+.ios-statusbar__icons {
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding-top: 1px;
+  padding-right: 1px;
+}
+
+.ios-device--dark .ios-statusbar__time { color: #fff; }
+
+.ios-viewport {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.ios-viewport > * { flex: 1; min-height: 0; }
+
+.ios-home {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 8px;
+  pointer-events: none;
+}
+.ios-home__bar {
+  width: 139px;
+  height: 5px;
+  border-radius: 100px;
+  background: rgba(0, 0, 0, .25);
+}
+.ios-device--dark .ios-home__bar { background: rgba(255, 255, 255, .7); }
+
+/* ---------- Screen base --------------------------------------------------- */
+
+.screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  font-family: var(--sans);
+  color: var(--navy);
+}
+.screen--navy {
+  background: var(--navy);
+  color: var(--cream);
+  position: relative;
+  overflow: hidden;
+}
+
+/* The diagonal jersey texture on the navy auth screens */
+.jersey {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(115deg, rgba(252, 247, 234, .05) 0 14px, transparent 14px 34px);
+}
+
+.screen__body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Placeholder textures ----------------------------------------- */
+/* Photos and video are deliberately unshot — the mockups render them as
+   diagonal hatch so nothing reads as real content. */
+
+.hatch-av   { background: repeating-linear-gradient(135deg, #E4DCC4 0 5px, #F2ECDB 5px 10px); }
+.hatch-vid  { background: repeating-linear-gradient(135deg, #E4DCC4 0 6px, #F2ECDB 6px 12px); }
+.hatch-vid-lg { background: repeating-linear-gradient(135deg, #E4DCC4 0 7px, #F2ECDB 7px 14px); }
+.hatch-navy { background: repeating-linear-gradient(135deg, #33459C 0 5px, #2A3A85 5px 10px); }
+.hatch-qr   { background: repeating-linear-gradient(135deg, #16256B 0 3px, #FCF7EA 3px 6px); }
+.hatch-card { background: repeating-linear-gradient(135deg, #E4DCC4 0 4px, #F2ECDB 4px 8px); }
+
+.play-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(22, 37, 107, .75);
+}
+
+/* ---------- Shared building blocks ---------------------------------------- */
+
+.card {
+  background: #fff;
+  border: 1px solid var(--n-10);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mono-label {
+  font: 500 10px/1 var(--mono);
+  letter-spacing: .12em;
+  color: var(--n-50);
+}
+
+.field-label {
+  font: 400 9.5px/1 var(--mono);
+  letter-spacing: .12em;
+  color: var(--c-50);
+  margin-bottom: 7px;
+}
+
+.field {
+  height: 52px;
+  border-radius: 11px;
+  background: var(--c-07);
+  border: 1px solid var(--c-18);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font: 400 14px/1 var(--sans);
+}
+.field--focus { border-color: var(--gold); }
+.field--split { justify-content: space-between; }
+
+/* The one gold action per screen, bottom-anchored and thumb-sized */
+.cta {
+  height: 56px;
+  border-radius: 12px;
+  background: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 15px/1 var(--serif);
+  letter-spacing: .1em;
+  color: var(--navy);
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--serif);
+}
+.cta--muted {
+  background: var(--c-14);
+  color: var(--c-45);
+  cursor: default;
+}
+.cta--muted-ink {
+  background: var(--n-12);
+  color: var(--n-40);
+  cursor: default;
+}
+.cta--navy { background: var(--navy); color: var(--cream); }
+.cta--red { background: var(--red); color: var(--cream); letter-spacing: .08em; }
+
+.chip {
+  padding: 7px 12px;
+  border-radius: 99px;
+  font: 500 11.5px/1 var(--sans);
+  border: 1px solid var(--c-35);
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+  font-family: var(--sans);
+}
+.chip--on {
+  background: var(--cream);
+  color: var(--navy);
+  font-weight: 600;
+  border-color: transparent;
+}
+
+.hdr {
+  padding: 56px 20px 14px;
+  background: linear-gradient(120deg, var(--navy), var(--navy-bright));
+  color: var(--cream);
+}
+.hdr__title { font: 700 28px/1.1 var(--serif); }
+.hdr__chips { display: flex; gap: 7px; margin-top: 14px; }
+
+.team-bar {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+.team-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.status-pill {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font: 600 9px/1 var(--mono);
+}
+.status-pill--alive { background: rgba(18, 166, 107, .14); color: var(--green-ink); }
+.status-pill--out { background: var(--n-08); color: var(--n-55); }
+
+.is-out { opacity: .6; }
+.is-out .name { text-decoration: line-through; }
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--n-07);
+}
+.row:last-child { border-bottom: 0; }
+
+.avatar {
+  border-radius: 50%;
+  flex: none;
+}
+
+.chev { font: 400 16px/1 var(--sans); color: var(--n-30); }
+
+/* ---------- Tab bar ------------------------------------------------------- */
+
+.tabbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 22px 34px;
+  border-top: 1px solid var(--n-10);
+  background: #fff;
+  flex: none;
+}
+
+.tab {
+  text-align: center;
+  color: var(--n-42, rgba(22, 37, 107, .42));
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+}
+.tab__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+  margin: 0 auto 6px;
+}
+.tab__label {
+  font: 500 9.5px/1 var(--mono);
+  letter-spacing: .06em;
+}
+.tab--on { color: var(--navy); }
+.tab--on .tab__dot { background: var(--red); }
+.tab--on .tab__label { font-weight: 600; }
+
+/* Interactive affordances — the mockups are flat, so keep this whisper-quiet */
+[data-go] { cursor: pointer; }
+[data-go]:hover { filter: brightness(.97); }
+.tab:hover .tab__label { color: var(--navy); }

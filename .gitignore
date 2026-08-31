@@ -1,0 +1,10 @@
+# Redundant archive of the design bundle — water-games/ holds the same files unpacked
+Water Games-handoff.zip
+
+# OS / editor noise
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Original Claude Design handoff bundle — kept locally, not published
+water-games/

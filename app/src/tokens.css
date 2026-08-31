@@ -1,0 +1,82 @@
+/* Design tokens lifted verbatim from `Soaked App Mockups.dc.html`.
+   Varsity direction: jersey navy + cream, gold for the one action that matters,
+   red for anything destructive or contested. */
+
+:root {
+  /* Core brand */
+  --navy: #16256B;
+  --navy-bright: #2440C7;
+  --cream: #FCF7EA;
+  --canvas: #F1ECDD;
+  --gold: #FFB524;
+  --red: #E8332A;
+  --green: #12A66B;
+
+  /* Team colors */
+  --team-red: #E8332A;
+  --team-green: #12A66B;
+  --team-purple: #7C3AED;
+  --team-blue: #1F79F5;
+  --team-amber: #F0A500;
+  --team-navy: #16256B;
+
+  /* Accents / derived */
+  --gold-light: #FFD37A;
+  --gold-ink: #7A4E00;
+  --gold-ink-soft: #6B4A00;
+  --green-deep: #0E8F5C;
+  --green-light: #17C77E;
+  --green-ink: #0B6B45;
+  --red-ink: #8C1F19;
+  --red-soft: #F0A99C;
+  --orange: #FF6A3D;
+
+  /* Navy alphas — the workhorse ink scale on cream screens */
+  --n-04: rgba(22, 37, 107, .04);
+  --n-05: rgba(22, 37, 107, .05);
+  --n-07: rgba(22, 37, 107, .07);
+  --n-08: rgba(22, 37, 107, .08);
+  --n-10: rgba(22, 37, 107, .10);
+  --n-12: rgba(22, 37, 107, .12);
+  --n-14: rgba(22, 37, 107, .14);
+  --n-18: rgba(22, 37, 107, .18);
+  --n-20: rgba(22, 37, 107, .20);
+  --n-25: rgba(22, 37, 107, .25);
+  --n-30: rgba(22, 37, 107, .30);
+  --n-35: rgba(22, 37, 107, .35);
+  --n-40: rgba(22, 37, 107, .40);
+  --n-45: rgba(22, 37, 107, .45);
+  --n-50: rgba(22, 37, 107, .50);
+  --n-55: rgba(22, 37, 107, .55);
+  --n-60: rgba(22, 37, 107, .60);
+  --n-70: rgba(22, 37, 107, .70);
+
+  /* Cream alphas — the ink scale on navy screens */
+  --c-35: rgba(252, 247, 234, .35);
+  --c-40: rgba(252, 247, 234, .40);
+  --c-45: rgba(252, 247, 234, .45);
+  --c-50: rgba(252, 247, 234, .50);
+  --c-55: rgba(252, 247, 234, .55);
+  --c-60: rgba(252, 247, 234, .60);
+  --c-65: rgba(252, 247, 234, .65);
+  --c-70: rgba(252, 247, 234, .70);
+  --c-75: rgba(252, 247, 234, .75);
+  --c-80: rgba(252, 247, 234, .80);
+  --c-06: rgba(252, 247, 234, .06);
+  --c-07: rgba(252, 247, 234, .07);
+  --c-12: rgba(252, 247, 234, .12);
+  --c-14: rgba(252, 247, 234, .14);
+  --c-16: rgba(252, 247, 234, .16);
+  --c-18: rgba(252, 247, 234, .18);
+  --c-22: rgba(252, 247, 234, .22);
+
+  /* Type */
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans: Geist, system-ui, -apple-system, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Device */
+  --device-w: 402px;
+  --device-h: 874px;
+  --device-radius: 48px;
+}
