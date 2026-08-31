@@ -33,16 +33,31 @@ window.S.data = {
     { name: 'Sandbar',  color: '#F0A500', alive: 2, hits: 3,  phase: '1/3 THIS PHASE' }
   ],
 
-  // Leaderboard · players
+  // Leaderboard · players.
+  // `phase3` are this-phase eliminations only; they sum to each team's
+  // "n/3 THIS PHASE" count in the standings (8 across the game).
   leaders: [
-    { name: 'Maya Okonkwo',   color: '#12A66B', meta: 'RIPTIDE · CAPTAIN', elims: 5 },
-    { name: 'Priya Raman',    color: '#7C3AED', meta: 'KRAKEN',            elims: 4 },
-    { name: 'Deshawn Pierce', color: '#12A66B', meta: 'RIPTIDE',           elims: 4 },
-    { name: 'Jonah Fields',   color: '#1F79F5', meta: 'TIDE',              elims: 3 },
-    { name: 'Eli Marchetti',  color: '#F0A500', meta: 'SANDBAR',           elims: 3 },
-    { name: 'Ty Brennan',     color: '#E8332A', meta: 'UNDERTOW',          elims: 3, out: true },
-    { name: 'You',            color: '#12A66B', meta: 'RIPTIDE',           elims: 3, mine: true },
-    { name: 'Sofia Alvarez',  color: '#E8332A', meta: 'UNDERTOW',          elims: 2 }
+    { name: 'Maya Okonkwo',   color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE · CAPTAIN', elims: 5, phase3: 1, days: 12 },
+    { name: 'Priya Raman',    color: '#7C3AED', team: 'Kraken',   meta: 'KRAKEN',            elims: 4, phase3: 2, days: 12 },
+    { name: 'Deshawn Pierce', color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 4, phase3: 1, days: 12 },
+    { name: 'Jonah Fields',   color: '#1F79F5', team: 'Tide',     meta: 'TIDE',              elims: 3, phase3: 0, days: 12 },
+    { name: 'Eli Marchetti',  color: '#F0A500', team: 'Sandbar',  meta: 'SANDBAR',           elims: 3, phase3: 1, days: 12 },
+    { name: 'Ty Brennan',     color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 3, phase3: 1, days: 9, out: true },
+    { name: 'You',            color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 3, phase3: 0, days: 12, mine: true },
+    { name: 'Sofia Alvarez',  color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 2, phase3: 2, days: 12 }
+  ],
+
+  // Approved clips behind the Hits grid. The first four are the ones drawn in
+  // the mockup; the rest extend the set so the filters have something to cut.
+  hits: [
+    { actor: 'Maya',    target: 'Ty',      place: 'parking lot ambush', team: 'Riptide',  phase: 3, time: '0:11', h: 150 },
+    { actor: 'Eli',     target: 'Priya',   place: 'bike rack',          team: 'Sandbar',  phase: 3, time: '0:07', h: 110 },
+    { actor: 'Deshawn', target: 'Ana',     place: 'front porch',        team: 'Riptide',  phase: 3, time: '0:22', h: 110 },
+    { actor: 'Jonah',   target: 'Chris',   place: 'bus stop',           team: 'Tide',     phase: 2, time: '0:09', h: 150 },
+    { actor: 'Priya',   target: 'Jonah',   place: 'driveway',           team: 'Kraken',   phase: 3, time: '0:12', h: 120 },
+    { actor: 'Sofia',   target: 'Eli',     place: 'gym doors',          team: 'Undertow', phase: 2, time: '0:15', h: 130 },
+    { actor: 'Maya',    target: 'Jonah',   place: 'track lot',          team: 'Riptide',  phase: 2, time: '0:08', h: 125 },
+    { actor: 'Ty',      target: 'Sofia',   place: 'corner store',       team: 'Undertow', phase: 1, time: '0:18', h: 140 }
   ],
 
   // Participants · everyone, alive first

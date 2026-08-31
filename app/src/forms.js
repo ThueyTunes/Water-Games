@@ -19,7 +19,7 @@
     join:    { code: 'NVH2' },
     payment: { method: 'apple' },
     newteam: { name: 'Breakwater', color: '#F0A500' },
-    filters: { participants: 'Everyone' },
+    filters: { participants: 'Everyone', hits: 'All approved', leaderboard: 'Players', standings: 'Teams' },
     search:  { participants: '', tag: '', teams: '' }
   };
 

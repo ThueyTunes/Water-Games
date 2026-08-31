@@ -147,18 +147,38 @@
   S.screens.hits = {
     id: 'hits', code: '1u', label: 'Hits',
     render: function () {
-      function clip(h, caption, time) {
+      function clip(h) {
         return '<div style="border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--n-10)" data-go="status">' +
-          '<div class="hatch-vid" style="height:' + h + 'px;position:relative">' +
+          '<div class="hatch-vid" style="height:' + h.h + 'px;position:relative">' +
             '<div class="play-dot" style="width:38px;height:38px"></div>' +
-            '<div style="position:absolute;left:8px;bottom:8px;font:400 9px/1 var(--mono);color:var(--n-70)">' + time + '</div>' +
+            '<div style="position:absolute;left:8px;bottom:8px;font:400 9px/1 var(--mono);color:var(--n-70)">' + h.time + '</div>' +
           '</div>' +
-          '<div style="padding:9px 10px;font:500 11.5px/1.35 var(--sans)">' + caption + '</div>' +
+          '<div style="padding:9px 10px;font:500 11.5px/1.35 var(--sans)">' +
+            h.actor + ' → ' + h.target + ' · ' + h.place + '</div>' +
         '</div>';
       }
 
-      var chips = ['All approved', 'My team', 'Phase 3'].map(function (c, i) {
-        return '<div class="chip' + (i === 0 ? ' chip--on' : '') + '">' + c + '</div>';
+      var mode = S.formState.filters.hits;
+      var chips = ['All approved', 'My team', 'Phase 3'].map(function (c) {
+        return S.forms.pick('filters.hits', c, c, 'pick--chip');
+      }).join('');
+
+      // "My team" is Riptide; "Phase 3" is the current phase only.
+      var shown = S.data.hits.filter(function (h) {
+        if (mode === 'My team') return h.team === 'Riptide';
+        if (mode === 'Phase 3') return h.phase === 3;
+        return true;
+      });
+
+      // Re-flow into the mockup's two-column masonry, shortest column first.
+      var cols = [[], []], heights = [0, 0];
+      shown.forEach(function (h) {
+        var c = heights[0] <= heights[1] ? 0 : 1;
+        cols[c].push(clip(h));
+        heights[c] += h.h;
+      });
+      var grid = cols.map(function (col) {
+        return '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' + col.join('') + '</div>';
       }).join('');
 
       return '<div class="screen">' +
@@ -168,16 +188,8 @@
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="display:flex;gap:10px;align-items:flex-start">' +
-            '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' +
-              clip(150, 'Maya → Ty · parking lot ambush', '0:11') +
-              clip(110, 'Eli → Priya · bike rack', '0:07') +
-            '</div>' +
-            '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' +
-              clip(110, 'Deshawn → Ana · front porch', '0:22') +
-              clip(150, 'Jonah → Chris · bus stop', '0:09') +
-            '</div>' +
-          '</div>' +
+          '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>' +
+          (shown.length ? '' : '<div class="empty">No approved clips in this filter yet.</div>') +
 
           '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
             '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
@@ -244,12 +256,12 @@
   S.screens.leaderboard = {
     id: 'leaderboard', code: '1w', label: 'Leaderboard',
     render: function () {
-      var chips = ['Players', 'Teams', 'This phase'].map(function (c, i) {
-        return '<div class="chip' + (i === 0 ? ' chip--on' : '') + '"' + (i === 1 ? ' data-go="standings"' : '') + '>' + c + '</div>';
+      var mode = S.formState.filters.leaderboard;
+      var chips = ['Players', 'Teams', 'This phase'].map(function (c) {
+        return S.forms.pick('filters.leaderboard', c, c, 'pick--chip');
       }).join('');
 
-      var rows = S.data.leaders.map(function (p, i) {
-        var rank = i + 1;
+      function playerRow(p, rank, score) {
         return '<div class="row"' + (p.mine ? ' style="background:rgba(18,166,107,.1)"' : '') + '>' +
           '<div style="font:700 15px/1 var(--serif);width:18px;color:' + (rank <= 3 ? 'var(--navy)' : 'var(--n-50)') + '">' + rank + '</div>' +
           '<div class="avatar hatch-av" style="width:32px;height:32px' + (p.out ? ';opacity:.45' : '') + '"></div>' +
@@ -259,9 +271,38 @@
               '<div style="font:400 10px/1 var(--mono);color:var(--n-55)">' + p.meta + '</div>' +
             '</div>' +
           '</div>' +
-          '<div style="font:700 19px/1 var(--serif)">' + p.elims + '</div>' +
+          '<div style="font:700 19px/1 var(--serif)">' + score + '</div>' +
         '</div>';
-      }).join('');
+      }
+
+      var rows, colHead, foot;
+
+      if (mode === 'Teams') {
+        colHead = '<span>TEAM</span><span>HITS</span>';
+        foot = 'Team totals are approved hits across every phase.';
+        rows = S.data.teams.map(function (t, i) {
+          return '<div class="row"' + (t.mine ? ' style="background:rgba(18,166,107,.1)" data-go="team"' : '') + '>' +
+            '<div style="font:700 15px/1 var(--serif);width:18px;color:' + (i < 3 ? 'var(--navy)' : 'var(--n-50)') + '">' + (i + 1) + '</div>' +
+            '<div class="team-bar" style="background:' + t.color + '"></div>' +
+            '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">' + t.name + '</div>' +
+              '<div style="font:400 10px/1 var(--mono);color:var(--n-55);margin-top:5px">' +
+                t.alive + ' OF 5 ALIVE · ' + t.phase + '</div></div>' +
+            '<div style="font:700 19px/1 var(--serif)">' + t.hits + '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        var isPhase = mode === 'This phase';
+        colHead = '<span>PLAYER · TEAM</span><span>' + (isPhase ? 'PHASE 3' : 'ELIMS') + '</span>';
+        foot = isPhase
+          ? 'This phase only. Totals reset when phase 4 opens.'
+          : 'Struck-through names are out. Eliminations stay on the board.';
+        rows = S.data.leaders.slice()
+          .sort(function (a, b) {
+            return isPhase ? (b.phase3 - a.phase3) || (b.elims - a.elims) : b.elims - a.elims;
+          })
+          .map(function (p, i) { return playerRow(p, i + 1, isPhase ? p.phase3 : p.elims); })
+          .join('');
+      }
 
       return '<div class="screen">' +
         '<div class="hdr" style="background:linear-gradient(120deg,var(--navy-bright),var(--navy))">' +
@@ -269,9 +310,9 @@
           '<div class="hdr__chips">' + chips + '</div>' +
         '</div>' +
         '<div style="flex:1;overflow:hidden;padding:13px 20px 0;display:flex;flex-direction:column;gap:9px">' +
-          '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px"><span>PLAYER · TEAM</span><span>ELIMS</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px">' + colHead + '</div>' +
           '<div class="card">' + rows + '</div>' +
-          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">Struck-through names are out. Eliminations stay on the board.</div>' +
+          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' +
         '</div>' +
         S.tabBar('leaderboard') +
       '</div>';

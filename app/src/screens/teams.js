@@ -153,28 +153,57 @@
   S.screens.standings = {
     id: 'standings', code: '1h', label: 'Standings',
     render: function () {
-      var chips = ['Teams', 'Players', 'Survival'].map(function (c, i) {
-        return '<div class="chip" style="padding:8px 13px' + (i === 0 ? ';background:var(--cream);color:var(--navy);font-weight:600;border-color:transparent' : ';border-color:var(--c-35)') + '"' +
-          (i === 1 ? ' data-go="leaderboard"' : '') + '>' + c + '</div>';
+      var mode = S.formState.filters.standings;
+      var chips = ['Teams', 'Players', 'Survival'].map(function (c) {
+        return S.forms.pick('filters.standings', c, c,
+          'pick--chip').replace('class="pick pick--chip"', 'class="pick pick--chip" style="padding:8px 13px"');
       }).join('');
 
-      var rows = S.data.teams.slice(0, 4).map(function (t, i) {
+      // One card shape, three rankings poured into it.
+      function card(o) {
         return '<div style="display:flex;align-items:center;gap:13px;background:#fff;border:' +
-            (t.mine ? '2px solid var(--green)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:14px 15px"' +
-            (t.mine ? ' data-go="team"' : '') + '>' +
-          '<div style="font:700 22px/1 var(--serif);width:26px">' + (i + 1) + '</div>' +
-          '<div class="team-bar" style="background:' + t.color + '"></div>' +
+            (o.mine ? '2px solid var(--green)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:14px 15px"' +
+            (o.go ? ' data-go="' + o.go + '"' : '') + '>' +
+          '<div style="font:700 22px/1 var(--serif);width:26px">' + o.rank + '</div>' +
+          (o.avatar ? '<div class="hatch-av" style="width:40px;height:40px;border-radius:8px;flex:none"></div>'
+                    : '<div class="team-bar" style="background:' + o.color + '"></div>') +
           '<div style="flex:1">' +
-            (t.mine
-              ? '<div style="display:flex;align-items:center;gap:7px"><div style="font:600 15px/1.2 var(--sans)">' + t.name + '</div>' +
+            (o.mine
+              ? '<div style="display:flex;align-items:center;gap:7px"><div style="font:600 15px/1.2 var(--sans)">' + o.name + '</div>' +
                 '<div style="padding:3px 6px;border-radius:4px;background:rgba(18,166,107,.15);font:600 8.5px/1 var(--mono);letter-spacing:.08em;color:var(--green)">YOURS</div></div>'
-              : '<div style="font:600 15px/1.2 var(--sans)">' + t.name + '</div>') +
-            '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + t.alive + ' ALIVE · ' + t.phase + '</div>' +
+              : '<div style="font:600 15px/1.2 var(--sans)' + (o.out ? ';text-decoration:line-through' : '') + '">' + o.name + '</div>') +
+            '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + o.meta + '</div>' +
           '</div>' +
-          '<div style="text-align:right"><div style="font:700 22px/1 var(--serif)">' + t.hits + '</div>' +
-            '<div style="font:400 9px/1 var(--mono);color:var(--n-45);margin-top:4px">HITS</div></div>' +
+          '<div style="text-align:right"><div style="font:700 22px/1 var(--serif)">' + o.score + '</div>' +
+            '<div style="font:400 9px/1 var(--mono);color:var(--n-45);margin-top:4px">' + o.unit + '</div></div>' +
         '</div>';
-      }).join('');
+      }
+
+      var rows, caption;
+
+      if (mode === 'Players') {
+        caption = 'APPROVED HITS · EVERY PHASE';
+        rows = S.data.leaders.slice().sort(function (a, b) { return b.elims - a.elims; })
+          .slice(0, 4).map(function (p, i) {
+            return card({ rank: i + 1, name: p.name, meta: p.meta + ' · ' + p.phase3 + ' THIS PHASE',
+              score: p.elims, unit: 'HITS', avatar: true, out: p.out, mine: p.mine });
+          }).join('');
+      } else if (mode === 'Survival') {
+        caption = 'PLAYERS STILL IN · 5 PER TEAM';
+        rows = S.data.teams.slice().sort(function (a, b) { return b.alive - a.alive || b.hits - a.hits; })
+          .slice(0, 4).map(function (t, i) {
+            return card({ rank: i + 1, name: t.name, color: t.color,
+              meta: (5 - t.alive) + ' LOST · ' + t.hits + ' HITS',
+              score: t.alive, unit: 'ALIVE', mine: t.mine, go: t.mine ? 'team' : null });
+          }).join('');
+      } else {
+        caption = 'APPROVED HITS · PHASE 3 QUOTA: 3 PER TEAM';
+        rows = S.data.teams.slice(0, 4).map(function (t, i) {
+          return card({ rank: i + 1, name: t.name, color: t.color,
+            meta: t.alive + ' ALIVE · ' + t.phase, score: t.hits, unit: 'HITS',
+            mine: t.mine, go: t.mine ? 'team' : null });
+        }).join('');
+      }
 
       return '<div class="screen">' +
         '<div style="padding:56px 20px 16px;background:linear-gradient(120deg,var(--navy-bright),var(--navy));color:var(--cream)">' +
@@ -183,7 +212,7 @@
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
-          '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">APPROVED HITS · PHASE 3 QUOTA: 3 PER TEAM</div>' +
+          '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">' + caption + '</div>' +
           rows +
           '<div style="margin-top:8px;padding:14px 15px;border-radius:12px;background:var(--canvas);border:1px dashed var(--n-20)">' +
             '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-50)">YOUR LINE</div>' +

@@ -722,16 +722,31 @@ window.S.data = {
     { name: 'Sandbar',  color: '#F0A500', alive: 2, hits: 3,  phase: '1/3 THIS PHASE' }
   ],
 
-  // Leaderboard · players
+  // Leaderboard · players.
+  // `phase3` are this-phase eliminations only; they sum to each team's
+  // "n/3 THIS PHASE" count in the standings (8 across the game).
   leaders: [
-    { name: 'Maya Okonkwo',   color: '#12A66B', meta: 'RIPTIDE · CAPTAIN', elims: 5 },
-    { name: 'Priya Raman',    color: '#7C3AED', meta: 'KRAKEN',            elims: 4 },
-    { name: 'Deshawn Pierce', color: '#12A66B', meta: 'RIPTIDE',           elims: 4 },
-    { name: 'Jonah Fields',   color: '#1F79F5', meta: 'TIDE',              elims: 3 },
-    { name: 'Eli Marchetti',  color: '#F0A500', meta: 'SANDBAR',           elims: 3 },
-    { name: 'Ty Brennan',     color: '#E8332A', meta: 'UNDERTOW',          elims: 3, out: true },
-    { name: 'You',            color: '#12A66B', meta: 'RIPTIDE',           elims: 3, mine: true },
-    { name: 'Sofia Alvarez',  color: '#E8332A', meta: 'UNDERTOW',          elims: 2 }
+    { name: 'Maya Okonkwo',   color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE · CAPTAIN', elims: 5, phase3: 1, days: 12 },
+    { name: 'Priya Raman',    color: '#7C3AED', team: 'Kraken',   meta: 'KRAKEN',            elims: 4, phase3: 2, days: 12 },
+    { name: 'Deshawn Pierce', color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 4, phase3: 1, days: 12 },
+    { name: 'Jonah Fields',   color: '#1F79F5', team: 'Tide',     meta: 'TIDE',              elims: 3, phase3: 0, days: 12 },
+    { name: 'Eli Marchetti',  color: '#F0A500', team: 'Sandbar',  meta: 'SANDBAR',           elims: 3, phase3: 1, days: 12 },
+    { name: 'Ty Brennan',     color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 3, phase3: 1, days: 9, out: true },
+    { name: 'You',            color: '#12A66B', team: 'Riptide',  meta: 'RIPTIDE',           elims: 3, phase3: 0, days: 12, mine: true },
+    { name: 'Sofia Alvarez',  color: '#E8332A', team: 'Undertow', meta: 'UNDERTOW',          elims: 2, phase3: 2, days: 12 }
+  ],
+
+  // Approved clips behind the Hits grid. The first four are the ones drawn in
+  // the mockup; the rest extend the set so the filters have something to cut.
+  hits: [
+    { actor: 'Maya',    target: 'Ty',      place: 'parking lot ambush', team: 'Riptide',  phase: 3, time: '0:11', h: 150 },
+    { actor: 'Eli',     target: 'Priya',   place: 'bike rack',          team: 'Sandbar',  phase: 3, time: '0:07', h: 110 },
+    { actor: 'Deshawn', target: 'Ana',     place: 'front porch',        team: 'Riptide',  phase: 3, time: '0:22', h: 110 },
+    { actor: 'Jonah',   target: 'Chris',   place: 'bus stop',           team: 'Tide',     phase: 2, time: '0:09', h: 150 },
+    { actor: 'Priya',   target: 'Jonah',   place: 'driveway',           team: 'Kraken',   phase: 3, time: '0:12', h: 120 },
+    { actor: 'Sofia',   target: 'Eli',     place: 'gym doors',          team: 'Undertow', phase: 2, time: '0:15', h: 130 },
+    { actor: 'Maya',    target: 'Jonah',   place: 'track lot',          team: 'Riptide',  phase: 2, time: '0:08', h: 125 },
+    { actor: 'Ty',      target: 'Sofia',   place: 'corner store',       team: 'Undertow', phase: 1, time: '0:18', h: 140 }
   ],
 
   // Participants · everyone, alive first
@@ -898,7 +913,7 @@ window.S = window.S || {};
     join:    { code: 'NVH2' },
     payment: { method: 'apple' },
     newteam: { name: 'Breakwater', color: '#F0A500' },
-    filters: { participants: 'Everyone' },
+    filters: { participants: 'Everyone', hits: 'All approved', leaderboard: 'Players', standings: 'Teams' },
     search:  { participants: '', tag: '', teams: '' }
   };
 
@@ -1524,18 +1539,38 @@ window.S = window.S || {};
   S.screens.hits = {
     id: 'hits', code: '1u', label: 'Hits',
     render: function () {
-      function clip(h, caption, time) {
+      function clip(h) {
         return '<div style="border-radius:12px;overflow:hidden;background:#fff;border:1px solid var(--n-10)" data-go="status">' +
-          '<div class="hatch-vid" style="height:' + h + 'px;position:relative">' +
+          '<div class="hatch-vid" style="height:' + h.h + 'px;position:relative">' +
             '<div class="play-dot" style="width:38px;height:38px"></div>' +
-            '<div style="position:absolute;left:8px;bottom:8px;font:400 9px/1 var(--mono);color:var(--n-70)">' + time + '</div>' +
+            '<div style="position:absolute;left:8px;bottom:8px;font:400 9px/1 var(--mono);color:var(--n-70)">' + h.time + '</div>' +
           '</div>' +
-          '<div style="padding:9px 10px;font:500 11.5px/1.35 var(--sans)">' + caption + '</div>' +
+          '<div style="padding:9px 10px;font:500 11.5px/1.35 var(--sans)">' +
+            h.actor + ' → ' + h.target + ' · ' + h.place + '</div>' +
         '</div>';
       }
 
-      var chips = ['All approved', 'My team', 'Phase 3'].map(function (c, i) {
-        return '<div class="chip' + (i === 0 ? ' chip--on' : '') + '">' + c + '</div>';
+      var mode = S.formState.filters.hits;
+      var chips = ['All approved', 'My team', 'Phase 3'].map(function (c) {
+        return S.forms.pick('filters.hits', c, c, 'pick--chip');
+      }).join('');
+
+      // "My team" is Riptide; "Phase 3" is the current phase only.
+      var shown = S.data.hits.filter(function (h) {
+        if (mode === 'My team') return h.team === 'Riptide';
+        if (mode === 'Phase 3') return h.phase === 3;
+        return true;
+      });
+
+      // Re-flow into the mockup's two-column masonry, shortest column first.
+      var cols = [[], []], heights = [0, 0];
+      shown.forEach(function (h) {
+        var c = heights[0] <= heights[1] ? 0 : 1;
+        cols[c].push(clip(h));
+        heights[c] += h.h;
+      });
+      var grid = cols.map(function (col) {
+        return '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' + col.join('') + '</div>';
       }).join('');
 
       return '<div class="screen">' +
@@ -1545,16 +1580,8 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:10px">' +
-          '<div style="display:flex;gap:10px;align-items:flex-start">' +
-            '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' +
-              clip(150, 'Maya → Ty · parking lot ambush', '0:11') +
-              clip(110, 'Eli → Priya · bike rack', '0:07') +
-            '</div>' +
-            '<div style="flex:1;display:flex;flex-direction:column;gap:10px">' +
-              clip(110, 'Deshawn → Ana · front porch', '0:22') +
-              clip(150, 'Jonah → Chris · bus stop', '0:09') +
-            '</div>' +
-          '</div>' +
+          '<div style="display:flex;gap:10px;align-items:flex-start">' + grid + '</div>' +
+          (shown.length ? '' : '<div class="empty">No approved clips in this filter yet.</div>') +
 
           '<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;background:#fff;border:1px solid var(--n-10)">' +
             '<div class="hatch-vid" style="width:34px;height:34px;border-radius:8px"></div>' +
@@ -1621,12 +1648,12 @@ window.S = window.S || {};
   S.screens.leaderboard = {
     id: 'leaderboard', code: '1w', label: 'Leaderboard',
     render: function () {
-      var chips = ['Players', 'Teams', 'This phase'].map(function (c, i) {
-        return '<div class="chip' + (i === 0 ? ' chip--on' : '') + '"' + (i === 1 ? ' data-go="standings"' : '') + '>' + c + '</div>';
+      var mode = S.formState.filters.leaderboard;
+      var chips = ['Players', 'Teams', 'This phase'].map(function (c) {
+        return S.forms.pick('filters.leaderboard', c, c, 'pick--chip');
       }).join('');
 
-      var rows = S.data.leaders.map(function (p, i) {
-        var rank = i + 1;
+      function playerRow(p, rank, score) {
         return '<div class="row"' + (p.mine ? ' style="background:rgba(18,166,107,.1)"' : '') + '>' +
           '<div style="font:700 15px/1 var(--serif);width:18px;color:' + (rank <= 3 ? 'var(--navy)' : 'var(--n-50)') + '">' + rank + '</div>' +
           '<div class="avatar hatch-av" style="width:32px;height:32px' + (p.out ? ';opacity:.45' : '') + '"></div>' +
@@ -1636,9 +1663,38 @@ window.S = window.S || {};
               '<div style="font:400 10px/1 var(--mono);color:var(--n-55)">' + p.meta + '</div>' +
             '</div>' +
           '</div>' +
-          '<div style="font:700 19px/1 var(--serif)">' + p.elims + '</div>' +
+          '<div style="font:700 19px/1 var(--serif)">' + score + '</div>' +
         '</div>';
-      }).join('');
+      }
+
+      var rows, colHead, foot;
+
+      if (mode === 'Teams') {
+        colHead = '<span>TEAM</span><span>HITS</span>';
+        foot = 'Team totals are approved hits across every phase.';
+        rows = S.data.teams.map(function (t, i) {
+          return '<div class="row"' + (t.mine ? ' style="background:rgba(18,166,107,.1)" data-go="team"' : '') + '>' +
+            '<div style="font:700 15px/1 var(--serif);width:18px;color:' + (i < 3 ? 'var(--navy)' : 'var(--n-50)') + '">' + (i + 1) + '</div>' +
+            '<div class="team-bar" style="background:' + t.color + '"></div>' +
+            '<div style="flex:1"><div style="font:600 13.5px/1.2 var(--sans)">' + t.name + '</div>' +
+              '<div style="font:400 10px/1 var(--mono);color:var(--n-55);margin-top:5px">' +
+                t.alive + ' OF 5 ALIVE · ' + t.phase + '</div></div>' +
+            '<div style="font:700 19px/1 var(--serif)">' + t.hits + '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        var isPhase = mode === 'This phase';
+        colHead = '<span>PLAYER · TEAM</span><span>' + (isPhase ? 'PHASE 3' : 'ELIMS') + '</span>';
+        foot = isPhase
+          ? 'This phase only. Totals reset when phase 4 opens.'
+          : 'Struck-through names are out. Eliminations stay on the board.';
+        rows = S.data.leaders.slice()
+          .sort(function (a, b) {
+            return isPhase ? (b.phase3 - a.phase3) || (b.elims - a.elims) : b.elims - a.elims;
+          })
+          .map(function (p, i) { return playerRow(p, i + 1, isPhase ? p.phase3 : p.elims); })
+          .join('');
+      }
 
       return '<div class="screen">' +
         '<div class="hdr" style="background:linear-gradient(120deg,var(--navy-bright),var(--navy))">' +
@@ -1646,9 +1702,9 @@ window.S = window.S || {};
           '<div class="hdr__chips">' + chips + '</div>' +
         '</div>' +
         '<div style="flex:1;overflow:hidden;padding:13px 20px 0;display:flex;flex-direction:column;gap:9px">' +
-          '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px"><span>PLAYER · TEAM</span><span>ELIMS</span></div>' +
+          '<div style="display:flex;justify-content:space-between;font:400 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--n-50);padding:0 4px">' + colHead + '</div>' +
           '<div class="card">' + rows + '</div>' +
-          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">Struck-through names are out. Eliminations stay on the board.</div>' +
+          '<div style="font:400 11px/1.45 var(--sans);color:var(--n-50);padding:0 4px">' + foot + '</div>' +
         '</div>' +
         S.tabBar('leaderboard') +
       '</div>';
@@ -2113,28 +2169,57 @@ window.S = window.S || {};
   S.screens.standings = {
     id: 'standings', code: '1h', label: 'Standings',
     render: function () {
-      var chips = ['Teams', 'Players', 'Survival'].map(function (c, i) {
-        return '<div class="chip" style="padding:8px 13px' + (i === 0 ? ';background:var(--cream);color:var(--navy);font-weight:600;border-color:transparent' : ';border-color:var(--c-35)') + '"' +
-          (i === 1 ? ' data-go="leaderboard"' : '') + '>' + c + '</div>';
+      var mode = S.formState.filters.standings;
+      var chips = ['Teams', 'Players', 'Survival'].map(function (c) {
+        return S.forms.pick('filters.standings', c, c,
+          'pick--chip').replace('class="pick pick--chip"', 'class="pick pick--chip" style="padding:8px 13px"');
       }).join('');
 
-      var rows = S.data.teams.slice(0, 4).map(function (t, i) {
+      // One card shape, three rankings poured into it.
+      function card(o) {
         return '<div style="display:flex;align-items:center;gap:13px;background:#fff;border:' +
-            (t.mine ? '2px solid var(--green)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:14px 15px"' +
-            (t.mine ? ' data-go="team"' : '') + '>' +
-          '<div style="font:700 22px/1 var(--serif);width:26px">' + (i + 1) + '</div>' +
-          '<div class="team-bar" style="background:' + t.color + '"></div>' +
+            (o.mine ? '2px solid var(--green)' : '1px solid var(--n-10)') + ';border-radius:12px;padding:14px 15px"' +
+            (o.go ? ' data-go="' + o.go + '"' : '') + '>' +
+          '<div style="font:700 22px/1 var(--serif);width:26px">' + o.rank + '</div>' +
+          (o.avatar ? '<div class="hatch-av" style="width:40px;height:40px;border-radius:8px;flex:none"></div>'
+                    : '<div class="team-bar" style="background:' + o.color + '"></div>') +
           '<div style="flex:1">' +
-            (t.mine
-              ? '<div style="display:flex;align-items:center;gap:7px"><div style="font:600 15px/1.2 var(--sans)">' + t.name + '</div>' +
+            (o.mine
+              ? '<div style="display:flex;align-items:center;gap:7px"><div style="font:600 15px/1.2 var(--sans)">' + o.name + '</div>' +
                 '<div style="padding:3px 6px;border-radius:4px;background:rgba(18,166,107,.15);font:600 8.5px/1 var(--mono);letter-spacing:.08em;color:var(--green)">YOURS</div></div>'
-              : '<div style="font:600 15px/1.2 var(--sans)">' + t.name + '</div>') +
-            '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + t.alive + ' ALIVE · ' + t.phase + '</div>' +
+              : '<div style="font:600 15px/1.2 var(--sans)' + (o.out ? ';text-decoration:line-through' : '') + '">' + o.name + '</div>') +
+            '<div style="font:400 10.5px/1 var(--mono);color:var(--n-50);margin-top:5px">' + o.meta + '</div>' +
           '</div>' +
-          '<div style="text-align:right"><div style="font:700 22px/1 var(--serif)">' + t.hits + '</div>' +
-            '<div style="font:400 9px/1 var(--mono);color:var(--n-45);margin-top:4px">HITS</div></div>' +
+          '<div style="text-align:right"><div style="font:700 22px/1 var(--serif)">' + o.score + '</div>' +
+            '<div style="font:400 9px/1 var(--mono);color:var(--n-45);margin-top:4px">' + o.unit + '</div></div>' +
         '</div>';
-      }).join('');
+      }
+
+      var rows, caption;
+
+      if (mode === 'Players') {
+        caption = 'APPROVED HITS · EVERY PHASE';
+        rows = S.data.leaders.slice().sort(function (a, b) { return b.elims - a.elims; })
+          .slice(0, 4).map(function (p, i) {
+            return card({ rank: i + 1, name: p.name, meta: p.meta + ' · ' + p.phase3 + ' THIS PHASE',
+              score: p.elims, unit: 'HITS', avatar: true, out: p.out, mine: p.mine });
+          }).join('');
+      } else if (mode === 'Survival') {
+        caption = 'PLAYERS STILL IN · 5 PER TEAM';
+        rows = S.data.teams.slice().sort(function (a, b) { return b.alive - a.alive || b.hits - a.hits; })
+          .slice(0, 4).map(function (t, i) {
+            return card({ rank: i + 1, name: t.name, color: t.color,
+              meta: (5 - t.alive) + ' LOST · ' + t.hits + ' HITS',
+              score: t.alive, unit: 'ALIVE', mine: t.mine, go: t.mine ? 'team' : null });
+          }).join('');
+      } else {
+        caption = 'APPROVED HITS · PHASE 3 QUOTA: 3 PER TEAM';
+        rows = S.data.teams.slice(0, 4).map(function (t, i) {
+          return card({ rank: i + 1, name: t.name, color: t.color,
+            meta: t.alive + ' ALIVE · ' + t.phase, score: t.hits, unit: 'HITS',
+            mine: t.mine, go: t.mine ? 'team' : null });
+        }).join('');
+      }
 
       return '<div class="screen">' +
         '<div style="padding:56px 20px 16px;background:linear-gradient(120deg,var(--navy-bright),var(--navy));color:var(--cream)">' +
@@ -2143,7 +2228,7 @@ window.S = window.S || {};
         '</div>' +
 
         '<div style="flex:1;overflow:hidden;padding:16px 20px 0;display:flex;flex-direction:column;gap:9px">' +
-          '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">APPROVED HITS · PHASE 3 QUOTA: 3 PER TEAM</div>' +
+          '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-45)">' + caption + '</div>' +
           rows +
           '<div style="margin-top:8px;padding:14px 15px;border-radius:12px;background:var(--canvas);border:1px dashed var(--n-20)">' +
             '<div style="font:400 10px/1 var(--mono);letter-spacing:.1em;color:var(--n-50)">YOUR LINE</div>' +
