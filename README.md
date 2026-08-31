@@ -34,11 +34,12 @@ git push -u origin main
 
 To update it later: `cd app && ./build.sh`, then commit and push.
 
-**Two things to know before you push.** On a free GitHub plan, Pages only serves
-from a **public** repo — private repos need Pro or Team. And the repo includes
-`water-games/`, the original design bundle, so those source mockups become
-publicly readable too. Delete that folder before pushing if you'd rather it
-stayed private; the app doesn't depend on it.
+**Live at <https://thueytunes.github.io/Water-Games/>.**
+
+On a free GitHub plan Pages only serves from a **public** repo — private repos
+need Pro or Team — so this repo has to stay public for the site to work. Because
+of that, `water-games/` (the original design bundle) is gitignored and never
+published: it stays on your machine only. Nothing in the app depends on it.
 
 `.nojekyll` is present so GitHub serves the files as-is rather than running them
 through Jekyll.
@@ -61,7 +62,7 @@ app/
       main.js          home · menu · hits · team chat · leaderboard · participants
       capture.js       camera · tag · review · status · confirm hit
       teams.js         teams · new team · standings · team · profile
-water-games/           the original design handoff bundle, untouched
+water-games/           the original design handoff bundle — local only, gitignored
 ```
 
 ## How it works
