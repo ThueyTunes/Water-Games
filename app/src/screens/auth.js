@@ -107,7 +107,9 @@
             ? '<div class="dev-code">' +
                 '<div class="dev-code__tag">PROTOTYPE · NO MAIL PROVIDER CONFIGURED</div>' +
                 '<div class="dev-code__val">' + st.code + '</div>' +
-                '<div class="dev-code__note">A real code was generated and is shown here instead of being emailed.</div>' +
+                '<div class="dev-code__note">A real code was generated and shown here instead of being emailed. ' +
+                  'To send actual email, deploy <code>email-backend/</code> and set <code>otp.endpoint</code> in ' +
+                  '<code>app/src/otp.js</code> — see that folder\'s README.</div>' +
               '</div>'
             : '') +
 

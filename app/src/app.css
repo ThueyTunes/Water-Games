@@ -656,3 +656,11 @@ body {
 
 /* Wide letter-spacing suits password dots, not the placeholder text. */
 .inp[type="password"]:placeholder-shown { font-size: 14px; letter-spacing: normal; }
+
+.dev-code__note code {
+  font: 500 10px/1.4 var(--mono);
+  background: rgba(252, 247, 234, .1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--gold-light);
+}
